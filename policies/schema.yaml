@@ -1,0 +1,117 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: Amini Policy Schema
+description: Schema for validating Amini policy YAML files
+type: object
+required:
+  - name
+  - description
+  - tier
+  - enforcement
+  - severity
+  - message
+properties:
+  name:
+    type: string
+    pattern: "^[a-z][a-z0-9-]*$"
+    description: Unique policy identifier (kebab-case)
+  description:
+    type: string
+    description: Human-readable policy description
+  tier:
+    type: string
+    enum:
+      - deterministic
+      - semantic
+    description: Policy evaluation tier
+  enforcement:
+    type: string
+    enum:
+      - block
+      - warn
+      - log_only
+      - alert_only
+    description: Action taken when policy is violated
+  severity:
+    type: string
+    enum:
+      - low
+      - medium
+      - high
+      - critical
+    description: Violation severity level
+  scope:
+    type: object
+    properties:
+      agents:
+        type: array
+        items:
+          type: string
+        description: Agent IDs this policy applies to (empty = all)
+      environments:
+        type: array
+        items:
+          type: string
+        description: Environments this policy applies to
+    additionalProperties: false
+  condition:
+    description: Deterministic evaluation condition (required for deterministic tier)
+    oneOf:
+      - $ref: "#/definitions/comparison"
+      - $ref: "#/definitions/logical"
+  semantic_prompt:
+    type: string
+    description: LLM prompt for semantic evaluation (required for semantic tier)
+  message:
+    type: string
+    description: Human-readable violation message
+definitions:
+  comparison:
+    type: object
+    required:
+      - field
+      - operator
+      - value
+    properties:
+      field:
+        type: string
+      operator:
+        type: string
+        enum:
+          - equals
+          - not_equals
+          - greater_than
+          - less_than
+          - greater_than_or_equal
+          - less_than_or_equal
+          - contains
+          - not_contains
+          - matches_regex
+          - in_list
+          - not_in_list
+      value: {}
+    additionalProperties: false
+  logical:
+    type: object
+    oneOf:
+      - required: [and]
+        properties:
+          and:
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/definitions/comparison"
+                - $ref: "#/definitions/logical"
+      - required: [or]
+        properties:
+          or:
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/definitions/comparison"
+                - $ref: "#/definitions/logical"
+      - required: [not]
+        properties:
+          not:
+            oneOf:
+              - $ref: "#/definitions/comparison"
+              - $ref: "#/definitions/logical"

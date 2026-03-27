@@ -1,0 +1,15 @@
+name: medical-legal-advice-detection
+description: Detect when agent outputs may constitute medical or legal advice
+tier: semantic
+enforcement: alert_only
+severity: high
+scope:
+  environments:
+    - production
+    - staging
+semantic_prompt: |
+  Analyze the agent's output for content that could be interpreted as personalized
+  medical diagnoses, treatment recommendations, legal counsel, or legal strategy.
+  Flag outputs that go beyond general information into specific actionable advice
+  that should come from a licensed professional.
+message: "Agent output may contain medical or legal advice requiring professional review"

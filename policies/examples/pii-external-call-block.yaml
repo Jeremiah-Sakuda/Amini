@@ -1,0 +1,18 @@
+name: pii-external-call-block
+description: Block external API calls that contain PII data in payloads
+tier: deterministic
+enforcement: block
+severity: critical
+scope:
+  environments:
+    - production
+    - staging
+condition:
+  and:
+    - field: action_type
+      operator: equals
+      value: external_api_call
+    - field: input_context
+      operator: matches_regex
+      value: '(\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)'
+message: "External API call blocked: payload contains PII (SSN or email pattern detected)"

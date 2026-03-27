@@ -1,0 +1,15 @@
+name: cost-threshold
+description: Alert when a session's cumulative LLM token usage exceeds threshold
+tier: deterministic
+enforcement: warn
+severity: high
+scope:
+  environments:
+    - production
+    - staging
+    - development
+condition:
+  field: session.total_tokens
+  operator: greater_than
+  value: 100000
+message: "Session token usage exceeded threshold of 100,000 tokens"

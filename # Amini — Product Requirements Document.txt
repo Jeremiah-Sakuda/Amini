@@ -1,0 +1,274 @@
+
+# Amini — Product Requirements Document (v2)
+
+**Agentic Workflow Auditor**
+*Trust infrastructure for the agentic era.*
+
+**Author:** Jeremiah
+**Version:** 2.0
+**Date:** March 27, 2026
+
+---
+
+## 1. Problem Statement
+
+Enterprises are deploying AI agents at accelerating scale — across customer support, code generation, internal operations, procurement, and compliance workflows. These agents make autonomous decisions, chain tool calls, and interact with production systems with minimal human oversight.
+
+No adequate tooling exists for answering three fundamental questions after an agent acts: *What did it decide? Why? Was it within policy?*
+
+Existing LLM observability platforms (Langsmith, Arize, Braintrust) focus on prompt-level tracing and model performance metrics. They treat agents as stateless inference endpoints rather than autonomous decision-makers operating under organizational constraints. The result is a growing governance vacuum: security teams can't audit agent behavior, compliance teams can't produce regulatory documentation, and platform engineering teams can't enforce policy boundaries across heterogeneous agent deployments.
+
+This gap is widening every quarter. As agent autonomy increases and regulatory scrutiny tightens (EU AI Act Article 14 on human oversight, NIST AI RMF governance functions, emerging state-level AI accountability laws), enterprises face compounding risk exposure with no systematic way to manage it.
+
+## 2. Product Vision
+
+Amini is the trust layer for agentic systems. It provides end-to-end observability, governance, and audit infrastructure purpose-built for AI agents operating in enterprise environments.
+
+The core thesis: agents are not prompts — they are processes. They maintain state, make branching decisions, invoke tools with real-world side effects, and operate under organizational policies that change over time. Auditing them requires process-aware instrumentation, not just token-level tracing.
+
+Amini starts as a debugging and replay tool that developers want, and evolves into the governance and compliance platform that enterprises require. The same decision chain data serves both audiences — the developer debugging a failure loop and the compliance officer producing an audit report.
+
+## 3. Target Users
+
+### Dual-Audience Model
+
+Amini serves two audiences with the same underlying data, sequenced for adoption:
+
+**Adoption audience — Agent Developers.** They build and maintain agent systems. They need to understand why an agent failed, looped, or produced an unexpected output. Decision chain replay and debugging are their entry point. They install the SDK because it helps them ship better agents, not because someone told them to. This is the bottoms-up pull.
+
+**Budget audience — Platform Engineering, Security, and Compliance Teams.** They need audit-ready documentation of agent behavior for internal reviews, SOC 2 audits, regulatory inquiries, and incident response. They discover Amini is already instrumented across their agent deployments and realize the same telemetry pipeline serves their governance requirements. This is the middle-out push.
+
+**Executive sponsor — Engineering Leadership / CISOs.** They approve budget and set governance policy. They care about aggregate risk exposure, not individual traces. Dashboards and executive reporting drive their engagement.
+
+The sequencing matters: developer adoption creates installed base, which creates visibility for platform and security teams, which creates budget authorization from leadership. The MVP must deliver genuine debugging value to developers — not just compliance artifacts.
+
+## 4. Competitive Landscape
+
+| Player | What They Do | Where They Fall Short |
+|---|---|---|
+| **Langsmith (LangChain)** | LLM trace logging, prompt debugging, evaluation | Prompt-centric. No policy enforcement, no audit-grade reporting, no governance layer. Strong developer adoption — Amini must match or exceed the debugging UX while adding the governance layer LangSmith lacks. |
+| **Arize AI** | ML observability, drift detection, model performance | Model-performance focused. Agent decision logic and tool-call side effects are outside their instrumentation model. |
+| **Braintrust** | LLM evaluation, scoring, dataset management | Evaluation-first. Designed for development-time testing, not production governance. |
+| **Datadog / Splunk** | General infrastructure observability | Agent-unaware. Can log API calls but can't reconstruct decision chains, enforce policies, or generate compliance documentation. Could add agent-specific features, but governance is a different product muscle. |
+| **Credo AI / Holistic AI** | AI governance and compliance platforms | Focused on model-level risk assessment and regulatory mapping. Don't instrument runtime agent behavior. Amini's compliance reporting enters their territory from the opposite direction — runtime data up to compliance, not compliance frameworks down to models. |
+
+Amini's differentiation lives in the intersection of runtime observability and governance. The debugging-first entry point creates a moat that pure governance tools can't replicate: you can't audit what you haven't instrumented.
+
+## 5. Product Architecture
+
+### 5.1 System Overview
+
+Amini operates as a lightweight sidecar layer that instruments agent execution without modifying agent logic. Three core subsystems:
+
+**Collector** — SDK and middleware that captures agent decision events, tool invocations, state transitions, and context at runtime. Framework-agnostic, with first-class integrations for LangChain/LangGraph, CrewAI, AutoGen, and custom agent architectures. Default mode: single-decorator auto-instrumentation. Explicit logging calls are optional enrichment, not required setup.
+
+**Analyzer** — Processing engine that reconstructs decision chains from raw events, evaluates them against registered policies, and flags violations or anomalies. Runs asynchronously to avoid adding latency to agent execution.
+
+**Reporter** — Interface layer that serves decision chain replays (developer debugging), audit logs (compliance documentation), dashboards (executive visibility), and alerts. API-first with a web console for interactive exploration.
+
+### 5.2 Data Model
+
+The schema separates event metadata from raw payloads at the storage layer. Metadata (decision structure, timing, policy evaluation results) is always stored in Amini's processing tier. Raw payloads (agent inputs containing customer data, tool call parameters, reasoning traces) are stored according to the customer's deployment configuration — in Amini's cloud for SaaS customers, in the customer's own infrastructure for hybrid deployments. This separation is a day-one architectural decision that enables future hybrid deployment without migration.
+
+```
+Agent Session
+├── Session metadata (agent_id, deployment_env, user_context, timestamp)
+│   [Always in Amini processing tier]
+├── Decision Chain
+│   ├── Decision Node
+│   │   ├── Input context (what the agent observed) [payload tier]
+│   │   ├── Reasoning trace (chain-of-thought, tool selection logic) [payload tier]
+│   │   ├── Action taken (tool call, API request, response generated) [metadata tier]
+│   │   ├── Output / side effects [payload tier]
+│   │   └── Policy evaluation results [metadata tier]
+│   ├── Decision Node
+│   │   └── ...
+│   └── Terminal state (completion, error, human handoff, timeout) [metadata tier]
+├── Policy Violations (if any) [metadata tier]
+└── Audit metadata (retention policy, classification, reviewer notes) [metadata tier]
+```
+
+### 5.3 Policy Engine
+
+Policies operate in two distinct execution tiers:
+
+**Deterministic policies (inline enforcement).** Evaluated synchronously during agent execution. These use rule-based evaluation — regex pattern matching, allowlist/blocklist checks, rate limits, data classification labels. Target latency: < 50ms. These policies can block, redirect, or modify agent actions in real time. Enforcement modes: log-only, warn, block.
+
+**Semantic policies (async advisory).** Evaluated asynchronously after agent execution. These require LLM-based or classifier-based evaluation — "Does the agent's reasoning contain financial advice?" or "Did the agent's response contradict the company's stated position?" Results surface as alerts, not enforcement actions. Semantic policies are explicitly positioned as detection and flagging tools through at least Phase 3. They do not block agent actions because the evaluation itself is probabilistic, and false positives halting production workflows is a worse outcome than delayed detection.
+
+This separation is fundamental, not a performance optimization. Amini does not promise enforcement on anything it cannot evaluate deterministically. Semantic enforcement becomes viable only when accumulated behavioral data enables training specialized classifiers for specific policy categories — a Phase 4+ capability.
+
+Policies are versioned and environment-aware. A staging deployment may run under permissive policies while production enforces strict boundaries. Policy changes are themselves audited.
+
+```yaml
+# Example deterministic policy (inline enforcement)
+policy:
+  name: "pii-external-call-block"
+  version: "1.2"
+  tier: "deterministic"
+  enforcement: "block"
+  scope:
+    agents: ["support-agent-v3", "onboarding-agent-*"]
+    environments: ["production"]
+  rule:
+    trigger: "tool_call"
+    condition: |
+      tool.type == "http_request"
+      AND tool.destination.is_external == true
+      AND context.contains_pii_pattern == true
+    action: "block_and_alert"
+    severity: "critical"
+    notification:
+      channels: ["slack:#agent-security", "pagerduty"]
+```
+
+```yaml
+# Example semantic policy (async advisory)
+policy:
+  name: "financial-advice-detection"
+  version: "0.3"
+  tier: "semantic"
+  enforcement: "alert_only"
+  scope:
+    agents: ["support-agent-*"]
+    environments: ["production"]
+  rule:
+    trigger: "session_complete"
+    evaluator: "llm_judge"
+    prompt: |
+      Review the following agent reasoning trace.
+      Does the agent provide specific financial advice
+      (e.g., recommending particular investments, predicting
+      market movements, advising on tax strategy)?
+      Respond with: {detected: bool, confidence: float, evidence: string}
+    action: "flag_for_review"
+    severity: "high"
+    notification:
+      channels: ["slack:#compliance-alerts"]
+```
+
+### 5.4 Starter Policy Pack
+
+Amini ships with a curated set of default policies that deliver immediate value during onboarding. These are labeled as starting-point templates — customers are expected to modify and extend them for their specific regulatory context. Amini does not warrant that default policies are sufficient for any particular compliance requirement.
+
+**Included defaults:**
+- Block external API calls containing SSN/credit card patterns (deterministic, inline)
+- Flag repetitive loop behavior exceeding N identical tool calls in sequence (deterministic, inline)
+- Rate limit alert on agent sessions exceeding cost threshold (deterministic, inline)
+- Flag agent sessions that terminate in error without human handoff (deterministic, async)
+- Detect potential financial advice in customer-facing responses (semantic, async)
+- Detect potential medical/legal advice in customer-facing responses (semantic, async)
+
+## 6. Feature Roadmap
+
+### Phase 1 — Foundation (MVP, Month 1)
+
+The MVP serves two use cases with one data pipeline: decision chain replay for debugging (developer value) and audit log export for compliance (buyer value).
+
+**Agent SDK (Python)**
+- Single-decorator auto-instrumentation: `@amini.trace` on the top-level agent function captures decision inputs, tool calls, state transitions, and outputs automatically through framework-specific hooks
+- Explicit instrumentation API (`amini.decision()` context manager) for optional fine-grained enrichment
+- Framework integrations: LangChain/LangGraph, CrewAI (others via generic wrapper)
+- Async event emission — zero blocking on the agent's critical path
+- < 5ms overhead per instrumented decision node
+- Target: working integration in under 15 minutes with a supported framework
+
+**Decision Chain Reconstruction and Replay**
+- Ingests raw events and assembles structured decision chains
+- Handles branching (parallel tool calls), retries, and error recovery paths
+- Timestamps and causal ordering for deterministic replay
+- Interactive replay mode: step through an agent's decision chain node by node, inspect inputs/outputs/reasoning at each step — primary debugging interface and the feature that drives developer adoption
+
+**Dual-Mode Interface**
+- Developer view: session replay with expandable decision nodes, tool call inspection, timing breakdown, error highlighting. Optimized for "why did this agent do that?"
+- Compliance view: audit log with search, filter, and export. Session summaries, policy violation flags, export to JSON and PDF. Optimized for "prove this agent operated within policy."
+- Both views built on the same underlying data; the interface adapts to the user's role.
+
+**Basic Policy Evaluation**
+- Deterministic policy engine with YAML-based definitions
+- Post-hoc evaluation against captured decision chains
+- Violation flagging with severity levels and contextual evidence
+- Starter policy pack (6 default templates) included out of the box
+
+**Data Architecture**
+- Schema-level separation of metadata tier and payload tier from day one
+- Cloud-only deployment for MVP; hybrid-ready schema ensures clean migration path
+- Event metadata always in Amini processing tier; raw payloads in Amini cloud (default) or customer-configured storage (future)
+
+### Phase 2 — Enforcement (Months 2-4)
+
+**Real-Time Deterministic Policy Enforcement**
+- SDK intercepts tool calls and evaluates deterministic policies before execution
+- Configurable enforcement modes: log-only, warn, block
+- Latency budget: < 50ms for inline deterministic evaluation
+- Semantic policies remain async and advisory-only
+
+**Async Semantic Policy Evaluation**
+- LLM-judge-based evaluation of completed sessions against semantic policies
+- Results surface as alerts and flags, explicitly not enforcement
+- Confidence scores and evidence excerpts attached to each evaluation
+- Human review queue for flagged sessions
+
+**Policy Management Console**
+- Visual policy editor with validation and testing against historical sessions
+- Policy versioning, diff view, rollback
+- Impact analysis: "If I deploy this policy, how many of last week's sessions would have been affected?"
+
+**Alerting and Incident Response**
+- Real-time alerts on policy violations via Slack, PagerDuty, email, webhook
+- Incident timeline aggregating related violations across agents
+- Annotation and resolution tracking for compliance audit trails
+
+### Phase 3 — Intelligence (Months 5-8)
+
+**Anomaly Detection**
+- Baseline "normal" agent behavior from historical sessions
+- Flag statistical outliers in decision patterns, tool usage, latency, cost
+- Drift detection: is this agent behaving differently than it did last week?
+
+**Compliance Reporting Modules**
+- Pre-built report templates mapped to regulatory frameworks (EU AI Act, SOC 2, NIST AI RMF)
+- Validated with compliance consultants before build
+- Automated evidence collection for audit requests
+- Continuous compliance monitoring with gap analysis
+
+**Hybrid Deployment**
+- Event metadata processed in Amini cloud; raw payloads stored in customer VPC
+- Deployment tooling (Terraform/Helm) for customer-side payload storage
+- Built when first enterprise contract justifies the engineering investment
+
+**Benchmarking and Analytics**
+- Cross-deployment performance benchmarks
+- Agent reliability scoring
+- Cost-per-decision analytics with optimization recommendations
+
+### Phase 4 — Platform (Months 9-12+)
+
+**Multi-Agent Support**
+- Cross-agent session correlation for multi-agent workflows
+- Trace propagation (OpenTelemetry-style headers) for cross-framework orchestration
+- Aggregate policy evaluation across agent boundaries
+
+**Specialized Semantic Classifiers**
+- Train domain-specific classifiers on accumulated behavioral data
+- Replace general-purpose LLM judges with faster, more reliable purpose-built models
+- Evaluate promotion of specific semantic policies from advisory to enforcement based on classifier reliability metrics
+
+**Amini API and Marketplace**
+- Public API for custom integrations, dashboards, and policy modules
+- Community policy library — share and import policy definitions
+- Third-party integrations with GRC platforms (ServiceNow, Vanta, Drata)
+
+**Predictive Governance**
+- Predict policy violations before they occur using behavioral data
+- Recommend policy adjustments based on observed agent evolution
+- Risk scoring for proposed agent deployments
+
+**On-Premise Deployment**
+- Full deployment within customer infrastructure for regulated industries
+- Enterprise tier with dedicated support and
+Done
+
+
+
+

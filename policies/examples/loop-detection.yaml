@@ -1,0 +1,19 @@
+name: loop-detection
+description: Detect repetitive decision patterns that indicate an agent is stuck in a loop
+tier: deterministic
+enforcement: warn
+severity: high
+scope:
+  environments:
+    - production
+    - staging
+    - development
+condition:
+  and:
+    - field: session.decision_count
+      operator: greater_than
+      value: 20
+    - field: session.unique_action_ratio
+      operator: less_than
+      value: 0.3
+message: "Potential agent loop detected: high decision count with low action variety"

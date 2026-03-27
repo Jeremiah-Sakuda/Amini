@@ -1,0 +1,17 @@
+name: error-without-handoff
+description: Flag sessions where errors occur but no human handoff is initiated
+tier: deterministic
+enforcement: alert_only
+severity: medium
+scope:
+  environments:
+    - production
+condition:
+  and:
+    - field: session.error_count
+      operator: greater_than
+      value: 2
+    - field: session.status
+      operator: not_equals
+      value: human_handoff
+message: "Session has multiple errors without human handoff escalation"

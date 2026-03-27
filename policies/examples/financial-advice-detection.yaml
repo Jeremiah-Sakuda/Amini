@@ -1,0 +1,15 @@
+name: financial-advice-detection
+description: Detect when agent outputs may constitute financial advice requiring regulatory compliance
+tier: semantic
+enforcement: alert_only
+severity: high
+scope:
+  environments:
+    - production
+    - staging
+semantic_prompt: |
+  Analyze the agent's output for content that could be interpreted as personalized
+  financial advice, including specific investment recommendations, portfolio allocation
+  suggestions, or tax planning guidance. Flag outputs that go beyond general financial
+  education into actionable recommendations.
+message: "Agent output may contain financial advice requiring regulatory review"
