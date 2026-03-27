@@ -45,9 +45,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Alembic
-packages/backend/alembic/versions/*.py
-!packages/backend/alembic/versions/.gitkeep
-
 # Logs
 *.log
