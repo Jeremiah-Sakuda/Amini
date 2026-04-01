@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, AlertCircle, Clock, Zap } from 'lucide-react'
 import type { DecisionNode as DecisionNodeType } from '../types/decision'
-import { SeverityBadge } from './PolicyBadge'
 
 interface Props {
   node: DecisionNodeType

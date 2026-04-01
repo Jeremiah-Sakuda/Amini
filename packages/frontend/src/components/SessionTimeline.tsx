@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Play, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import type { DecisionNode } from '../types/decision'
 import { DecisionNodeCard } from './DecisionNode'
 

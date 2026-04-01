@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Download, Plus } from 'lucide-react'
+import { FileText, Plus } from 'lucide-react'
 import { useReports, useGenerateReport } from '../api/reports'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { format } from 'date-fns'

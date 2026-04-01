@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bot, Shield, AlertTriangle, Activity } from 'lucide-react'
+import { Bot, Shield, AlertTriangle } from 'lucide-react'
 import { useAgentRegistry } from '../api/registry'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 

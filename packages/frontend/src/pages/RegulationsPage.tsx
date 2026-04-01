@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react'
+import { BookOpen, HelpCircle } from 'lucide-react'
 import { useRegulations } from '../api/regulations'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 
