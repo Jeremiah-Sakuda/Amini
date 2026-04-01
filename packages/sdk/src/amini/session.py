@@ -12,6 +12,9 @@ class SessionInfo:
     environment: str
     user_context: dict | None = None
     metadata: dict | None = None
+    correlation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    regulations: list[str] = field(default_factory=list)
+    framework: str = ""
 
 
 class SessionManager:
@@ -30,6 +33,9 @@ class SessionManager:
         session_id: str | None = None,
         user_context: dict | None = None,
         metadata: dict | None = None,
+        correlation_id: str | None = None,
+        regulations: list[str] | None = None,
+        framework: str = "",
     ) -> SessionInfo:
         session = SessionInfo(
             session_id=session_id or str(uuid.uuid4()),
@@ -37,6 +43,9 @@ class SessionManager:
             environment=environment,
             user_context=user_context,
             metadata=metadata,
+            correlation_id=correlation_id or str(uuid.uuid4()),
+            regulations=regulations or [],
+            framework=framework,
         )
         self._local.session = session
         return session

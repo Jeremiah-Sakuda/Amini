@@ -17,6 +17,7 @@ class EventType(str, Enum):
     DECISION_OUTPUT = "decision.output"
     DECISION_ERROR = "decision.error"
     DECISION_END = "decision.end"
+    POLICY_VIOLATION = "policy.violation"
 
 
 @dataclass
@@ -29,9 +30,12 @@ class Event:
     payload: dict[str, Any] = field(default_factory=dict)
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     sdk_timestamp: float = field(default_factory=time.time)
+    correlation_id: str | None = None
+    framework: str | None = None
+    regulations: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "event_id": self.event_id,
             "event_type": self.event_type.value,
             "agent_id": self.agent_id,
@@ -41,3 +45,10 @@ class Event:
             "payload": self.payload,
             "sdk_timestamp": self.sdk_timestamp,
         }
+        if self.correlation_id:
+            d["correlation_id"] = self.correlation_id
+        if self.framework:
+            d["framework"] = self.framework
+        if self.regulations:
+            d["regulations"] = self.regulations
+        return d

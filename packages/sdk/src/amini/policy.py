@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
+logger = logging.getLogger("amini.policy")
 
 
 class PolicyTier(str, Enum):
@@ -24,10 +28,52 @@ class PolicySeverity(str, Enum):
 
 
 @dataclass
-class PolicyStub:
-    """Client-side policy type stub for future inline enforcement."""
+class PolicyResult:
+    policy_name: str
+    passed: bool
+    enforcement: PolicyEnforcement
+    severity: PolicySeverity
+    message: str = ""
+    evidence: dict[str, Any] = field(default_factory=dict)
+
+
+class PolicyViolationError(Exception):
+    """Raised when an inline policy blocks execution."""
+
+    def __init__(self, result: PolicyResult) -> None:
+        self.result = result
+        super().__init__(
+            f"Policy '{result.policy_name}' blocked execution: {result.message}"
+        )
+
+
+@dataclass
+class PolicyRule:
+    """A client-side policy rule fetched from the server."""
 
     name: str
     tier: PolicyTier
     enforcement: PolicyEnforcement
     severity: PolicySeverity
+    regulation: str = ""
+    article: str = ""
+    conditions: dict[str, Any] = field(default_factory=dict)
+
+
+class PolicyCache:
+    """Local cache of policies fetched from the Amini backend."""
+
+    def __init__(self) -> None:
+        self._policies: dict[str, PolicyRule] = {}
+
+    def register(self, policy: PolicyRule) -> None:
+        self._policies[policy.name] = policy
+
+    def get(self, name: str) -> PolicyRule | None:
+        return self._policies.get(name)
+
+    def all(self) -> list[PolicyRule]:
+        return list(self._policies.values())
+
+    def clear(self) -> None:
+        self._policies.clear()

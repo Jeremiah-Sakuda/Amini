@@ -16,6 +16,9 @@ class DecisionContext:
         environment: str,
         emit_fn: Any,
         parent_decision_id: str | None = None,
+        correlation_id: str | None = None,
+        framework: str | None = None,
+        regulations: list[str] | None = None,
     ) -> None:
         self.name = name
         self.decision_id = str(uuid.uuid4())
@@ -24,6 +27,9 @@ class DecisionContext:
         self._environment = environment
         self._emit = emit_fn
         self._parent_decision_id = parent_decision_id
+        self._correlation_id = correlation_id
+        self._framework = framework
+        self._regulations = regulations or []
         self._start_time: float = 0
         self._sequence: int = 0
 
@@ -75,5 +81,8 @@ class DecisionContext:
             decision_id=self.decision_id,
             environment=self._environment,
             payload=payload,
+            correlation_id=self._correlation_id,
+            framework=self._framework,
+            regulations=self._regulations,
         )
         self._emit(event)
