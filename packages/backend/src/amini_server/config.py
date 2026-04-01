@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     debug: bool = True
     payload_storage_mode: str = "local"  # local | external (future)
     api_keys: list[str] = ["dev-key"]
+    retention_days: int = 90
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
