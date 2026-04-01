@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     debug: bool = True
     payload_storage_mode: str = "local"  # local | external (future)
+    api_keys: list[str] = ["dev-key"]
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

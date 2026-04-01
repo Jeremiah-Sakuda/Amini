@@ -1,12 +1,16 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.events import EventBatchCreate, EventCreate, EventResponse
 from ..services.event_service import store_event, store_event_batch
 from ..workers.processor import process_pending_events
 
-router = APIRouter(prefix="/api/v1/events", tags=["events"])
+router = APIRouter(
+    prefix="/api/v1/events",
+    tags=["events"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.post("", status_code=202, response_model=EventResponse)
