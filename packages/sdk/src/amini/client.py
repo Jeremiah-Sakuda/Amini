@@ -9,7 +9,14 @@ from .config import AminiConfig
 from .context import DecisionContext
 from .emitter import EventEmitter
 from .events import Event, EventType
-from .policy import PolicyCache, PolicyResult, PolicySeverity, PolicyViolationError
+from .policy import (
+    PolicyCache,
+    PolicyEnforcement,
+    PolicyResult,
+    PolicySeverity,
+    PolicyViolationError,
+    evaluate_condition,
+)
 from .session import SessionInfo, SessionManager
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -222,32 +229,50 @@ class Amini:
             logger.debug("Policy '%s' not found in cache, skipping enforcement", policy_name)
             return
 
+        # Build evaluation context from function call
+        context = {
+            "args": _safe_repr(args),
+            "kwargs": _safe_repr(kwargs),
+            "function": fn.__qualname__,
+            "agent_id": self._config.agent_id,
+            "environment": self._config.environment,
+            "framework": self._config.framework,
+            "regulations": self._config.regulations,
+        }
+
+        # Evaluate conditions — empty conditions means the policy passes
+        if policy.conditions:
+            passed = not evaluate_condition(policy.conditions, context)
+        else:
+            passed = True
+
         result = PolicyResult(
             policy_name=policy_name,
-            passed=True,
+            passed=passed,
             enforcement=policy.enforcement,
             severity=policy.severity,
+            message=f"Policy '{policy_name}' {'passed' if passed else 'violated'}",
         )
 
-        session = self._sessions.current
-        if session:
-            self._emitter.emit(Event(
-                event_type=EventType.POLICY_VIOLATION,
-                agent_id=self._config.agent_id,
-                session_id=session.session_id,
-                environment=self._config.environment,
-                correlation_id=session.correlation_id,
-                payload={
-                    "policy_name": policy_name,
-                    "passed": result.passed,
-                    "enforcement": result.enforcement.value,
-                    "severity": result.severity.value,
-                    "function": fn.__qualname__,
-                },
-            ))
+        # Only emit event when the policy is violated
+        if not passed:
+            session = self._sessions.current
+            if session:
+                self._emitter.emit(Event(
+                    event_type=EventType.POLICY_VIOLATION,
+                    agent_id=self._config.agent_id,
+                    session_id=session.session_id,
+                    environment=self._config.environment,
+                    correlation_id=session.correlation_id,
+                    payload={
+                        "policy_name": policy_name,
+                        "passed": False,
+                        "enforcement": result.enforcement.value,
+                        "severity": result.severity.value,
+                        "function": fn.__qualname__,
+                    },
+                ))
 
-        if not result.passed:
-            from .policy import PolicyEnforcement
             if policy.enforcement == PolicyEnforcement.BLOCK:
                 raise PolicyViolationError(result)
             elif policy.enforcement == PolicyEnforcement.WARN:

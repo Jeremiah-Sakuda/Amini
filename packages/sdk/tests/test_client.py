@@ -1,3 +1,7 @@
+import logging
+
+import pytest
+
 from amini import Amini, AminiConfig, PolicyViolationError, PolicyRule, PolicyTier, PolicyEnforcement, PolicySeverity
 
 
@@ -128,7 +132,8 @@ def test_enforce_decorator_no_policy_cached(amini):
     amini.end_session()
 
 
-def test_enforce_decorator_with_policy(amini):
+def test_enforce_decorator_with_policy_no_conditions(amini):
+    """Policy with no conditions always passes."""
     rule = PolicyRule(
         name="test-policy",
         tier=PolicyTier.DETERMINISTIC,
@@ -144,4 +149,140 @@ def test_enforce_decorator_with_policy(amini):
     amini.start_session()
     result = my_func()
     assert result == "ok"
+    amini.end_session()
+
+
+def test_enforce_block_raises_on_violation(amini):
+    """Policy with conditions that match should block execution."""
+    rule = PolicyRule(
+        name="block-policy",
+        tier=PolicyTier.DETERMINISTIC,
+        enforcement=PolicyEnforcement.BLOCK,
+        severity=PolicySeverity.HIGH,
+        conditions={
+            "field": "kwargs.action",
+            "operator": "equals",
+            "value": "delete",
+        },
+    )
+    amini._policy_cache.register(rule)
+
+    @amini.enforce("block-policy")
+    def dangerous_action(action: str):
+        return f"did {action}"
+
+    amini.start_session()
+    with pytest.raises(PolicyViolationError):
+        dangerous_action(action="delete")
+    amini.end_session()
+
+
+def test_enforce_block_allows_non_matching(amini):
+    """Policy conditions that don't match should allow execution."""
+    rule = PolicyRule(
+        name="block-policy-2",
+        tier=PolicyTier.DETERMINISTIC,
+        enforcement=PolicyEnforcement.BLOCK,
+        severity=PolicySeverity.HIGH,
+        conditions={
+            "field": "kwargs.action",
+            "operator": "equals",
+            "value": "delete",
+        },
+    )
+    amini._policy_cache.register(rule)
+
+    @amini.enforce("block-policy-2")
+    def safe_action(action: str):
+        return f"did {action}"
+
+    amini.start_session()
+    result = safe_action(action="read")
+    assert result == "did read"
+    amini.end_session()
+
+
+def test_enforce_warn_logs_on_violation(amini, caplog):
+    """Warn-mode policy should log warning but allow execution."""
+    rule = PolicyRule(
+        name="warn-policy",
+        tier=PolicyTier.DETERMINISTIC,
+        enforcement=PolicyEnforcement.WARN,
+        severity=PolicySeverity.MEDIUM,
+        conditions={
+            "field": "kwargs.amount",
+            "operator": "greater_than",
+            "value": 1000,
+        },
+    )
+    amini._policy_cache.register(rule)
+
+    @amini.enforce("warn-policy")
+    def transfer(amount: int):
+        return f"transferred {amount}"
+
+    amini.start_session()
+    with caplog.at_level(logging.WARNING, logger="amini.client"):
+        result = transfer(amount=5000)
+    assert result == "transferred 5000"
+    assert "warn-policy" in caplog.text
+    amini.end_session()
+
+
+def test_enforce_with_and_conditions(amini):
+    """Compound AND conditions should all need to match for violation."""
+    rule = PolicyRule(
+        name="compound-policy",
+        tier=PolicyTier.DETERMINISTIC,
+        enforcement=PolicyEnforcement.BLOCK,
+        severity=PolicySeverity.CRITICAL,
+        conditions={
+            "and": [
+                {"field": "kwargs.action", "operator": "equals", "value": "delete"},
+                {"field": "kwargs.scope", "operator": "equals", "value": "all"},
+            ]
+        },
+    )
+    amini._policy_cache.register(rule)
+
+    @amini.enforce("compound-policy")
+    def action(action: str, scope: str):
+        return "ok"
+
+    amini.start_session()
+    # Only one condition matches — should pass
+    result = action(action="delete", scope="single")
+    assert result == "ok"
+
+    # Both conditions match — should block
+    with pytest.raises(PolicyViolationError):
+        action(action="delete", scope="all")
+    amini.end_session()
+
+
+def test_enforce_with_not_condition(amini):
+    """NOT condition should invert the match."""
+    rule = PolicyRule(
+        name="not-policy",
+        tier=PolicyTier.DETERMINISTIC,
+        enforcement=PolicyEnforcement.BLOCK,
+        severity=PolicySeverity.HIGH,
+        conditions={
+            "not": {"field": "kwargs.approved", "operator": "equals", "value": True}
+        },
+    )
+    amini._policy_cache.register(rule)
+
+    @amini.enforce("not-policy")
+    def action(approved: bool):
+        return "ok"
+
+    amini.start_session()
+    # approved=True → NOT matches → condition is false → passes
+    result = action(approved=True)
+    assert result == "ok"
+
+    # approved=False → NOT doesn't match → condition is true → blocks
+    with pytest.raises(PolicyViolationError):
+        action(approved=False)
     amini.end_session()

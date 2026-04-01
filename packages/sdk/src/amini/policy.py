@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -77,3 +78,70 @@ class PolicyCache:
 
     def clear(self) -> None:
         self._policies.clear()
+
+
+# ---------------------------------------------------------------------------
+# Safe recursive-descent condition evaluator (mirrors backend policy_engine)
+# ---------------------------------------------------------------------------
+
+def evaluate_condition(condition: dict, context: dict[str, Any]) -> bool:
+    """Evaluate a condition dict against a context using safe recursive descent."""
+    if not condition:
+        return True
+    if "and" in condition:
+        return all(evaluate_condition(c, context) for c in condition["and"])
+    if "or" in condition:
+        return any(evaluate_condition(c, context) for c in condition["or"])
+    if "not" in condition:
+        return not evaluate_condition(condition["not"], context)
+
+    field = condition.get("field", "")
+    operator = condition.get("operator", "")
+    expected = condition.get("value")
+
+    actual = _resolve_field(field, context)
+    return _compare(actual, operator, expected)
+
+
+def _resolve_field(field: str, context: dict[str, Any]) -> Any:
+    """Resolve a dotted field path against a context dict."""
+    parts = field.split(".")
+    current: Any = context
+    for part in parts:
+        if isinstance(current, dict):
+            current = current.get(part)
+        else:
+            return None
+    return current
+
+
+def _compare(actual: Any, operator: str, expected: Any) -> bool:
+    """Safe comparison without eval()."""
+    if actual is None:
+        return False
+    try:
+        if operator == "equals":
+            return actual == expected
+        elif operator == "not_equals":
+            return actual != expected
+        elif operator == "greater_than":
+            return float(actual) > float(expected)
+        elif operator == "less_than":
+            return float(actual) < float(expected)
+        elif operator == "greater_than_or_equal":
+            return float(actual) >= float(expected)
+        elif operator == "less_than_or_equal":
+            return float(actual) <= float(expected)
+        elif operator == "contains":
+            return str(expected) in str(actual)
+        elif operator == "not_contains":
+            return str(expected) not in str(actual)
+        elif operator == "matches_regex":
+            return bool(re.search(str(expected), str(actual)))
+        elif operator == "in_list":
+            return actual in (expected if isinstance(expected, list) else [expected])
+        elif operator == "not_in_list":
+            return actual not in (expected if isinstance(expected, list) else [expected])
+    except (ValueError, TypeError):
+        return False
+    return False
