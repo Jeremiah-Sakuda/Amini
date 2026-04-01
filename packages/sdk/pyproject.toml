@@ -10,6 +10,10 @@ packages = [{include = "amini", from = "src"}]
 python = "^3.10"
 httpx = "^0.27"
 pydantic = "^2.0"
+langchain-core = {version = ">=0.1", optional = true}
+
+[tool.poetry.extras]
+langchain = ["langchain-core"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"

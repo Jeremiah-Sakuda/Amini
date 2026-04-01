@@ -2,14 +2,32 @@ from __future__ import annotations
 
 from typing import Any
 
+try:
+    from langchain_core.callbacks import BaseCallbackHandler
+
+    _HAS_LANGCHAIN = True
+except ImportError:
+    _HAS_LANGCHAIN = False
+
 from ..client import Amini
 from ..context import DecisionContext
 
+# Use BaseCallbackHandler as the base class when langchain is installed,
+# otherwise fall back to a plain object so the module can still be imported.
+_Base: type = BaseCallbackHandler if _HAS_LANGCHAIN else object
 
-class AminiLangChainHandler:
-    """LangChain callback handler for Amini tracing."""
+
+class AminiLangChainHandler(_Base):  # type: ignore[misc]
+    """LangChain callback handler for Amini tracing.
+
+    Inherits from ``langchain_core.callbacks.BaseCallbackHandler`` when
+    langchain-core is installed, ensuring full compatibility with
+    LangChain's ``callbacks=[handler]`` pattern.
+    """
 
     def __init__(self, amini: Amini) -> None:
+        if _HAS_LANGCHAIN:
+            super().__init__()
         self._amini = amini
         self._decisions: dict[str, DecisionContext] = {}
 
