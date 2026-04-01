@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from sqlalchemy import select
@@ -15,58 +16,70 @@ from ..services.violation_service import record_violation
 
 logger = logging.getLogger("amini.processor")
 
+# Module-level lock prevents concurrent processing runs
+_processing_lock = asyncio.Lock()
+
 
 async def process_pending_events(db: AsyncSession) -> int:
-    """Process unprocessed events: build chains, evaluate policies, record violations."""
-    events = await get_unprocessed_events(db, limit=200)
-    if not events:
+    """Process unprocessed events: build chains, evaluate policies, record violations.
+
+    Uses an asyncio lock to prevent concurrent processing runs that could
+    cause duplicate chain building or violation recording.
+    """
+    if _processing_lock.locked():
+        logger.debug("Processing already in progress, skipping")
         return 0
 
-    # Build decision chains
-    nodes = await build_chain_from_events(db, events)
+    async with _processing_lock:
+        events = await get_unprocessed_events(db, limit=200)
+        if not events:
+            return 0
 
-    # Mark events as processed
-    event_ids = [e.id for e in events]
-    await mark_events_processed(db, event_ids)
+        # Build decision chains
+        nodes = await build_chain_from_events(db, events)
 
-    # Get unique session IDs from new nodes
-    session_ids = {node.session_id for node in nodes}
+        # Mark events as processed
+        event_ids = [e.id for e in events]
+        await mark_events_processed(db, event_ids)
 
-    # Load active policy versions
-    pv_result = await db.execute(
-        select(PolicyVersion).where(PolicyVersion.is_active == True)  # noqa: E712
-    )
-    policy_versions = list(pv_result.scalars().all())
+        # Get unique session IDs from new nodes
+        session_ids = {node.session_id for node in nodes}
 
-    # Evaluate policies for each affected session
-    violation_count = 0
-    for session_id in session_ids:
-        session_result = await db.execute(
-            select(AgentSession)
-            .options(selectinload(AgentSession.decisions))
-            .where(AgentSession.id == session_id)
+        # Load active policy versions
+        pv_result = await db.execute(
+            select(PolicyVersion).where(PolicyVersion.is_active == True)  # noqa: E712
         )
-        session = session_result.scalar_one_or_none()
-        if not session:
-            continue
+        policy_versions = list(pv_result.scalars().all())
 
-        results = evaluate_session(session, session.decisions, policy_versions)
-        for result in results:
-            if result.violated:
-                await record_violation(
-                    db,
-                    session_id=session_id,
-                    policy_version_id=result.policy_version_id,
-                    severity=result.severity,
-                    violation_type="policy_violation",
-                    description=result.message,
-                    evidence=result.evidence,
-                )
-                violation_count += 1
+        # Evaluate policies for each affected session
+        violation_count = 0
+        for session_id in session_ids:
+            session_result = await db.execute(
+                select(AgentSession)
+                .options(selectinload(AgentSession.decisions))
+                .where(AgentSession.id == session_id)
+            )
+            session = session_result.scalar_one_or_none()
+            if not session:
+                continue
 
-    await db.commit()
-    logger.info(
-        "Processed %d events, created %d nodes, recorded %d violations",
-        len(events), len(nodes), violation_count,
-    )
-    return len(events)
+            results = evaluate_session(session, session.decisions, policy_versions)
+            for result in results:
+                if result.violated:
+                    await record_violation(
+                        db,
+                        session_id=session_id,
+                        policy_version_id=result.policy_version_id,
+                        severity=result.severity,
+                        violation_type="policy_violation",
+                        description=result.message,
+                        evidence=result.evidence,
+                    )
+                    violation_count += 1
+
+        await db.commit()
+        logger.info(
+            "Processed %d events, created %d nodes, recorded %d violations",
+            len(events), len(nodes), violation_count,
+        )
+        return len(events)
