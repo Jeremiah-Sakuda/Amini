@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "amini-server"
 version = "0.1.0"
-description = "Amini backend — agentic workflow auditor API"
+description = "Amini backend — compliance infrastructure for agentic AI"
 authors = ["Amini Team"]
 readme = "README.md"
 packages = [{include = "amini_server", from = "src"}]
