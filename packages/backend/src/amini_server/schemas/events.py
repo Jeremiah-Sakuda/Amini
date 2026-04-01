@@ -12,6 +12,9 @@ class EventCreate(BaseModel):
     environment: str = "development"
     payload: dict | None = None
     sdk_timestamp: float
+    correlation_id: str | None = None
+    framework: str | None = None
+    regulations: list[str] | None = None
 
 
 class EventBatchCreate(BaseModel):

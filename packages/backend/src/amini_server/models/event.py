@@ -15,3 +15,8 @@ class RawEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     sdk_timestamp: Mapped[float] = mapped_column(Float)
     processed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+
+    # --- v2 fields ---
+    correlation_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    framework: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    regulations: Mapped[dict | None] = mapped_column(JSON, nullable=True)

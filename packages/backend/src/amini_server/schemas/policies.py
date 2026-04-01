@@ -13,6 +13,13 @@ class PolicyCreate(BaseModel):
     enforcement: str = "log_only"
     severity: str = "medium"
     scope: dict | None = None
+    regulation: str | None = None
+    regulation_article: str | None = None
+    risk_class: str | None = None
+    agent_tags: list[str] | None = None
+    effective_date: str | None = None
+    human_review_required: bool = False
+    max_autonomous_actions: int | None = None
 
 
 class PolicyResponse(BaseModel):
@@ -35,6 +42,13 @@ class PolicyVersionResponse(BaseModel):
     message: str
     scope: dict | None = None
     is_active: bool
+    regulation: str | None = None
+    regulation_article: str | None = None
+    risk_class: str | None = None
+    agent_tags: list[str] | None = None
+    effective_date: str | None = None
+    human_review_required: bool = False
+    max_autonomous_actions: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

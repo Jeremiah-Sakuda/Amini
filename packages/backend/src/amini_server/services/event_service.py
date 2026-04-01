@@ -20,6 +20,9 @@ async def store_event(db: AsyncSession, event: EventCreate) -> RawEvent:
         payload=event.payload,
         sdk_timestamp=event.sdk_timestamp,
         processed=False,
+        correlation_id=event.correlation_id,
+        framework=event.framework,
+        regulations=event.regulations,
     )
     db.add(raw)
     await db.flush()

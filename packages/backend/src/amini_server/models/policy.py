@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -47,6 +47,15 @@ class PolicyVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     severity: Mapped[str] = mapped_column(String(20), default="medium")
     message: Mapped[str] = mapped_column(Text, default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # --- v2: Regulatory linkage ---
+    regulation: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    regulation_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    risk_class: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    agent_tags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    effective_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    human_review_required: Mapped[bool] = mapped_column(Boolean, default=False)
+    max_autonomous_actions: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     policy: Mapped["Policy"] = relationship(back_populates="versions")
     violations: Mapped[list["PolicyViolation"]] = relationship(back_populates="policy_version")  # noqa: F821
