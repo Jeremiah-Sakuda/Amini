@@ -5,16 +5,16 @@ import { LoadingSpinner } from '../components/LoadingSpinner'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  inactive: 'bg-gray-100 text-gray-800',
-  deprecated: 'bg-yellow-100 text-yellow-800',
-  shadow: 'bg-red-100 text-red-800',
+  active: 'bg-emerald-500/10 text-emerald-400',
+  inactive: 'bg-zinc-500/10 text-zinc-400',
+  deprecated: 'bg-amber-500/10 text-amber-400',
+  shadow: 'bg-red-500/10 text-red-400',
 }
 
 const discoveryColors: Record<string, string> = {
-  sdk: 'bg-blue-100 text-blue-800',
-  manual: 'bg-gray-100 text-gray-800',
-  network: 'bg-purple-100 text-purple-800',
+  sdk: 'bg-blue-500/10 text-blue-400',
+  manual: 'bg-zinc-500/10 text-zinc-400',
+  network: 'bg-purple-500/10 text-purple-400',
 }
 
 export function RegistryPage() {
@@ -32,17 +32,17 @@ export function RegistryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Agent Registry</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-xl font-semibold text-zinc-100">Agent Registry</h2>
+          <p className="mt-1 text-sm text-zinc-500">
             Catalog of all AI agent deployments across the organization
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500">Status:</span>
+          <span className="text-zinc-500">Status:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
           >
             <option value="">All</option>
             <option value="active">Active</option>
@@ -73,42 +73,42 @@ export function RegistryPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Agent</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Framework</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Risk Class</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Discovery</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Sessions</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Violations</th>
+      <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-zinc-800">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">Agent</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">Framework</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">Risk Class</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">Discovery</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-zinc-500">Sessions</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-zinc-500">Violations</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {agents.map((agent) => (
-              <tr key={agent.id} className="hover:bg-gray-50">
+              <tr key={agent.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50">
                 <td className="px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{agent.name || agent.agent_external_id}</p>
-                    <p className="text-xs text-gray-500">{agent.agent_external_id}</p>
+                    <p className="text-sm font-medium text-zinc-100">{agent.name || agent.agent_external_id}</p>
+                    <p className="text-xs text-zinc-500">{agent.agent_external_id}</p>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">{agent.framework || '-'}</td>
+                <td className="px-4 py-3 text-sm text-zinc-400">{agent.framework || '-'}</td>
                 <td className="px-4 py-3">
                   {agent.risk_class ? (
-                    <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                    <span className="inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
                       {agent.risk_class}
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-400">-</span>
+                    <span className="text-sm text-zinc-600">-</span>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      statusColors[agent.deployment_status] || 'bg-gray-100 text-gray-800'
+                      statusColors[agent.deployment_status] || 'bg-zinc-500/10 text-zinc-400'
                     }`}
                   >
                     {agent.deployment_status}
@@ -117,17 +117,17 @@ export function RegistryPage() {
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      discoveryColors[agent.discovery_method] || 'bg-gray-100 text-gray-800'
+                      discoveryColors[agent.discovery_method] || 'bg-zinc-500/10 text-zinc-400'
                     }`}
                   >
                     {agent.discovery_method}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right text-sm text-gray-600">{agent.session_count}</td>
+                <td className="px-4 py-3 text-right text-sm text-zinc-400">{agent.session_count}</td>
                 <td className="px-4 py-3 text-right">
                   <span
                     className={`text-sm font-medium ${
-                      agent.violation_count > 0 ? 'text-red-600' : 'text-gray-600'
+                      agent.violation_count > 0 ? 'text-red-400' : 'text-zinc-400'
                     }`}
                   >
                     {agent.violation_count}
@@ -137,7 +137,7 @@ export function RegistryPage() {
             ))}
             {agents.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-zinc-500">
                   No agents registered yet. Install the SDK to begin tracking agents.
                 </td>
               </tr>
@@ -150,19 +150,19 @@ export function RegistryPage() {
 }
 
 const colorMap: Record<string, string> = {
-  blue: 'bg-blue-50 text-blue-600',
-  green: 'bg-green-50 text-green-600',
-  red: 'bg-red-50 text-red-600',
+  blue: 'bg-blue-500/10 text-blue-400',
+  green: 'bg-emerald-500/10 text-emerald-400',
+  red: 'bg-red-500/10 text-red-400',
 }
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-center gap-3">
         <div className={`rounded-lg p-2 ${colorMap[color]}`}>{icon}</div>
         <div>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-2xl font-semibold text-zinc-100">{value}</p>
+          <p className="text-xs text-zinc-500">{label}</p>
         </div>
       </div>
     </div>

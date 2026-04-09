@@ -67,13 +67,13 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Settings size={24} className="text-gray-700" />
-        <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+        <Settings size={24} className="text-zinc-300" />
+        <h2 className="text-xl font-semibold text-zinc-100">Settings</h2>
       </div>
 
       {/* Configuration */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-zinc-300">
           <Settings size={16} />
           Configuration
         </h3>
@@ -85,15 +85,15 @@ export function SettingsPage() {
       </div>
 
       {/* Connection Status */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-zinc-300">
           <RefreshCw size={16} />
           Connection Status
         </h3>
         <button
           onClick={checkHealth}
           disabled={healthStatus === 'loading'}
-          className="flex items-center gap-2 rounded-md bg-amini-600 px-4 py-2 text-sm font-medium text-white hover:bg-amini-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
         >
           {healthStatus === 'loading' ? (
             <><RefreshCw size={16} className="animate-spin" /> Checking...</>
@@ -102,22 +102,22 @@ export function SettingsPage() {
           )}
         </button>
         {healthStatus === 'success' && healthData && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-green-50 px-3 py-2">
-            <Check size={16} className="mt-0.5 flex-shrink-0 text-green-600" />
-            <p className="text-sm text-green-900">Backend is healthy (status: {healthData.status})</p>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-500/10 px-3 py-2">
+            <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-400" />
+            <p className="text-sm text-emerald-300">Backend is healthy (status: {healthData.status})</p>
           </div>
         )}
         {healthStatus === 'error' && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2">
-            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-600" />
-            <p className="text-sm text-red-900">{healthError}</p>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-500/10 px-3 py-2">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-400" />
+            <p className="text-sm text-red-300">{healthError}</p>
           </div>
         )}
       </div>
 
       {/* Data Management */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-zinc-300">
           <Database size={16} />
           Data Management
         </h3>
@@ -125,7 +125,7 @@ export function SettingsPage() {
           <button
             onClick={triggerCleanup}
             disabled={cleanupStatus === 'loading'}
-            className="flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 disabled:opacity-50"
           >
             {cleanupStatus === 'loading' ? (
               <><Database size={16} className="animate-spin" /> Running...</>
@@ -133,32 +133,32 @@ export function SettingsPage() {
               <><Database size={16} /> Trigger Retention Cleanup</>
             )}
           </button>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-zinc-500">
             Delete data older than the configured retention period
           </p>
         </div>
         {cleanupStatus === 'success' && cleanupData && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-green-50 px-3 py-2">
-            <Check size={16} className="mt-0.5 flex-shrink-0 text-green-600" />
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-500/10 px-3 py-2">
+            <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-400" />
             <div>
-              <p className="text-sm font-medium text-green-900">Cleanup completed</p>
-              <p className="text-xs text-green-700">
+              <p className="text-sm font-medium text-emerald-300">Cleanup completed</p>
+              <p className="text-xs text-emerald-400">
                 {Object.entries(cleanupData.deleted).map(([k, v]) => `${k}: ${v}`).join(', ')}
               </p>
             </div>
           </div>
         )}
         {cleanupStatus === 'error' && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2">
-            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-600" />
-            <p className="text-sm text-red-900">{cleanupError}</p>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-500/10 px-3 py-2">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-400" />
+            <p className="text-sm text-red-300">{cleanupError}</p>
           </div>
         )}
       </div>
 
       {/* Regulatory Templates */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-zinc-300">
           <Shield size={16} />
           Regulatory Templates
         </h3>
@@ -166,7 +166,7 @@ export function SettingsPage() {
           <button
             onClick={seedRegulations}
             disabled={seedStatus === 'loading'}
-            className="flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-500 disabled:opacity-50"
           >
             {seedStatus === 'loading' ? (
               <><Shield size={16} className="animate-spin" /> Seeding...</>
@@ -174,35 +174,35 @@ export function SettingsPage() {
               <><Shield size={16} /> Seed Regulatory Frameworks</>
             )}
           </button>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-zinc-500">
             Load pre-built templates (EU AI Act, SOC 2 Type II)
           </p>
         </div>
         {seedStatus === 'success' && seedData && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-green-50 px-3 py-2">
-            <Check size={16} className="mt-0.5 flex-shrink-0 text-green-600" />
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-500/10 px-3 py-2">
+            <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-400" />
             <div>
-              <p className="text-sm font-medium text-green-900">Seeded {seedData.seeded} frameworks</p>
-              <p className="text-xs text-green-700">{seedData.regulations.join(', ')}</p>
+              <p className="text-sm font-medium text-emerald-300">Seeded {seedData.seeded} frameworks</p>
+              <p className="text-xs text-emerald-400">{seedData.regulations.join(', ')}</p>
             </div>
           </div>
         )}
         {seedStatus === 'error' && (
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2">
-            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-600" />
-            <p className="text-sm text-red-900">{seedError}</p>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-red-500/10 px-3 py-2">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-400" />
+            <p className="text-sm text-red-300">{seedError}</p>
           </div>
         )}
       </div>
 
       {/* About */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-zinc-300">
           <Info size={16} />
           About
         </h3>
-        <p className="text-sm font-medium text-gray-900">Amini v2</p>
-        <p className="mt-1 text-xs text-gray-600">
+        <p className="text-sm font-medium text-zinc-100">Amini v2</p>
+        <p className="mt-1 text-xs text-zinc-400">
           Compliance infrastructure for agentic AI. Real-time monitoring, policy enforcement,
           and audit trails for AI agent systems.
         </p>
@@ -213,9 +213,9 @@ export function SettingsPage() {
 
 function ConfigRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2">
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className="font-mono text-xs text-gray-900">{value}</span>
+    <div className="flex items-center justify-between rounded-md bg-zinc-800/50 px-3 py-2">
+      <span className="text-sm text-zinc-400">{label}</span>
+      <span className="font-mono text-xs text-zinc-100">{value}</span>
     </div>
   )
 }
