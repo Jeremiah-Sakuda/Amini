@@ -294,7 +294,7 @@ class Amini:
         self._emitter.shutdown()
 
 
-def _safe_repr(obj: Any) -> Any:
+def _safe_repr(obj: Any, _depth: int = 0) -> Any:
     """Safely convert an object to a JSON-compatible representation.
 
     Uses a structured fallback chain to preserve as much fidelity as possible:
@@ -308,40 +308,42 @@ def _safe_repr(obj: Any) -> Any:
     """
     import dataclasses
 
+    if _depth > 32:
+        return "<max depth exceeded>"
     if obj is None:
         return None
     if isinstance(obj, (str, int, float, bool)):
         return obj
     if isinstance(obj, dict):
-        return {k: _safe_repr(v) for k, v in obj.items()}
+        return {k: _safe_repr(v, _depth + 1) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
-        return [_safe_repr(item) for item in obj]
+        return [_safe_repr(item, _depth + 1) for item in obj]
 
     # Pydantic v2
     if hasattr(obj, "model_dump") and callable(obj.model_dump):
         try:
-            return _safe_repr(obj.model_dump())
+            return _safe_repr(obj.model_dump(), _depth + 1)
         except Exception:
             pass
 
     # Pydantic v1
     if hasattr(obj, "dict") and callable(obj.dict) and hasattr(obj, "__fields__"):
         try:
-            return _safe_repr(obj.dict())
+            return _safe_repr(obj.dict(), _depth + 1)
         except Exception:
             pass
 
     # dataclasses
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         try:
-            return _safe_repr(dataclasses.asdict(obj))
+            return _safe_repr(dataclasses.asdict(obj), _depth + 1)
         except Exception:
             pass
 
     # Generic objects with __dict__
     if hasattr(obj, "__dict__"):
         try:
-            return _safe_repr(vars(obj))
+            return _safe_repr(vars(obj), _depth + 1)
         except Exception:
             pass
 

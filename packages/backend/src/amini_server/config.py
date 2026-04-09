@@ -1,4 +1,9 @@
+import logging
+import os
+
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger("amini.config")
 
 
 class Settings(BaseSettings):
@@ -16,3 +21,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if settings.api_keys == ["dev-key"] and not settings.debug:
+    logger.warning(
+        "Running with default API key 'dev-key' in non-debug mode. "
+        "Set API_KEYS environment variable for production."
+    )

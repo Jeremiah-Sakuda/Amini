@@ -33,8 +33,9 @@ class AminiLangChainHandler(_Base):  # type: ignore[misc]
 
     def on_chain_start(self, serialized: dict[str, Any], inputs: dict[str, Any], **kwargs: Any) -> None:
         run_id = str(kwargs.get("run_id", ""))
+        parent_run_id = str(kwargs.get("parent_run_id", "")) if kwargs.get("parent_run_id") else None
         name = serialized.get("name", serialized.get("id", ["unknown"])[-1])
-        ctx = self._amini.decision(f"chain:{name}")
+        ctx = self._amini.decision(f"chain:{name}", parent_decision_id=parent_run_id)
         ctx.__enter__()
         ctx.log_input(inputs)
         self._decisions[run_id] = ctx
@@ -54,8 +55,9 @@ class AminiLangChainHandler(_Base):  # type: ignore[misc]
 
     def on_tool_start(self, serialized: dict[str, Any], input_str: str, **kwargs: Any) -> None:
         run_id = str(kwargs.get("run_id", ""))
+        parent_run_id = str(kwargs.get("parent_run_id", "")) if kwargs.get("parent_run_id") else None
         name = serialized.get("name", "unknown_tool")
-        ctx = self._amini.decision(f"tool:{name}")
+        ctx = self._amini.decision(f"tool:{name}", parent_decision_id=parent_run_id)
         ctx.__enter__()
         ctx.log_action("tool_call", {"tool": name, "input": input_str})
         self._decisions[run_id] = ctx
@@ -75,8 +77,9 @@ class AminiLangChainHandler(_Base):  # type: ignore[misc]
 
     def on_llm_start(self, serialized: dict[str, Any], prompts: list[str], **kwargs: Any) -> None:
         run_id = str(kwargs.get("run_id", ""))
+        parent_run_id = str(kwargs.get("parent_run_id", "")) if kwargs.get("parent_run_id") else None
         name = serialized.get("name", serialized.get("id", ["unknown"])[-1])
-        ctx = self._amini.decision(f"llm:{name}")
+        ctx = self._amini.decision(f"llm:{name}", parent_decision_id=parent_run_id)
         ctx.__enter__()
         ctx.log_action("llm_call", {"model": name, "prompt_count": len(prompts)})
         self._decisions[run_id] = ctx
