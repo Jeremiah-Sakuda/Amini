@@ -14,31 +14,33 @@ Enforcement deadlines are real and approaching: EU AI Act (August 2026), SEC AI 
 
 ## Key Features
 
-- **Decision chain capture** — Structured logging of every agent decision: inputs, reasoning, tool calls, outputs, errors
-- **Two-tier policy engine** — Deterministic rules (12 operators, compound conditions, < 50ms) with block/warn/log enforcement modes
-- **Pre-built regulatory templates** — EU AI Act (8 articles) and SOC 2 (6 criteria) mapped to specific policy requirements
-- **Agent registry** — Catalog of all AI agent deployments with framework, risk classification, and regulation tagging
-- **Audit report generation** — One-click compliance reports with session summaries, violation breakdowns, and gap analysis
-- **Incident response** — Automated incident packages with severity classification, remediation paths, and lifecycle tracking
-- **Cross-framework support** — LangChain, CrewAI, and custom frameworks via correlation ID propagation
-- **Dual-mode dashboard** — Developer replay view and compliance audit view in a single interface
+- **Decision chain capture** — Structured logging of every agent decision: inputs, reasoning, tool calls, outputs, errors. Metadata/payload tier separation keeps audit data queryable while storing full payloads separately
+- **Two-tier policy engine** — Deterministic rules (13 operators including `is_empty`/`is_not_empty`, compound AND/OR/NOT conditions, < 50ms) with block/warn/log enforcement modes. ReDoS-safe regex evaluation
+- **Pre-built regulatory templates** — EU AI Act (8 articles) and SOC 2 (6 criteria) mapped to specific policy requirements, with one-click seeding from the Settings page
+- **Agent registry** — Catalog of all AI agent deployments with framework, risk classification, and regulation tagging. Auto-registered from SDK events
+- **Audit report generation** — Async background generation (HTTP 202) with compliance reports containing session summaries, violation breakdowns, and gap analysis
+- **Incident response** — Automated incident creation from violations with severity classification, remediation paths, resolution notes, and full lifecycle tracking (open → investigating → remediated → closed)
+- **Policy management UI** — Create and manage policies directly from the dashboard with YAML rule editor, tier/enforcement/severity configuration, and regulation linking
+- **Cross-framework support** — LangChain (with hierarchical parent tracking), CrewAI, and custom frameworks via correlation ID propagation
+- **Dual-mode dashboard** — Developer replay view and compliance audit view in a single interface across 10 pages
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Frontend (React/TS)                   │
-│  Dashboard · Agent Registry · Regulations · Reports     │
-│  Violations · Incidents · Policy Management             │
+│  Dashboard · Agent Registry · Sessions · Policies       │
+│  Regulations · Violations · Incidents · Reports         │
+│  Settings · Session Detail                              │
 └────────────────────────┬────────────────────────────────┘
-                         │ TanStack Query
+                         │ TanStack Query + Bearer Auth
 ┌────────────────────────┴────────────────────────────────┐
 │                   Backend (FastAPI)                      │
 │  Event Ingestion · Chain Builder · Policy Engine        │
 │  Regulatory Mapping · Audit Reports · Incidents         │
-│  SQLAlchemy Async · Alembic Migrations                  │
+│  SQLAlchemy Async · Alembic · Background Tasks          │
 └────────────────────────┬────────────────────────────────┘
-                         │ REST API
+                         │ Authenticated REST API
 ┌────────────────────────┴────────────────────────────────┐
 │                    Python SDK                            │
 │  @trace · @enforce · Decision Context · LangChain       │
@@ -49,8 +51,8 @@ Enforcement deadlines are real and approaching: EU AI Act (August 2026), SEC AI 
 | Package | Stack | Description |
 |---------|-------|-------------|
 | **SDK** (`packages/sdk`) | Python 3.10+, httpx, Pydantic | Instrument agents with `@trace` and `@enforce` decorators. Background event emission, safe policy DSL, exponential backoff transport |
-| **Backend** (`packages/backend`) | FastAPI, SQLAlchemy async, Alembic | Event ingestion, decision chain reconstruction, two-tier policy evaluation, regulatory mapping, audit reports, incident response |
-| **Frontend** (`packages/frontend`) | React 18, TypeScript, Tailwind, Vite | 9 fully functional pages with dual-mode interface (developer/compliance). Zero `any` usage, TanStack Query data fetching |
+| **Backend** (`packages/backend`) | FastAPI, SQLAlchemy async, Alembic | Event ingestion, decision chain reconstruction, two-tier policy evaluation, regulatory mapping, async audit reports, incident response. All endpoints authenticated |
+| **Frontend** (`packages/frontend`) | React 18, TypeScript, Tailwind, Vite | 10 pages with dual-mode interface. Policy creation, incident management, settings configuration. TanStack Query data fetching with Bearer auth |
 
 ## Quick Start
 
@@ -146,9 +148,9 @@ packages/
     src/amini_server/   Models, routers, services, workers
     tests/              26+ integration tests
   frontend/           React dashboard
-    src/pages/          9 page components (dashboard, sessions, policies, etc.)
-    src/components/     16 reusable components
-    src/api/            TanStack Query hooks
+    src/pages/          10 page components
+    src/components/     8 reusable components
+    src/api/            TanStack Query hooks with Bearer auth
 policies/
   examples/           Starter policy pack (6 YAML policies)
   schema.yaml         Policy validation schema
@@ -158,16 +160,21 @@ policies/
 
 ## API Authentication
 
-All event ingestion endpoints require a Bearer token:
+**All API endpoints** require a Bearer token:
 
 ```bash
+curl -X GET http://localhost:8000/api/v1/sessions \
+  -H "Authorization: Bearer dev-key"
+
 curl -X POST http://localhost:8000/api/v1/events \
   -H "Authorization: Bearer dev-key" \
   -H "Content-Type: application/json" \
   -d '{"event_type": "decision.start", "agent_id": "my-agent", ...}'
 ```
 
-Configure API keys via the `API_KEYS` environment variable (comma-separated list).
+Configure API keys via the `API_KEYS` environment variable (comma-separated list). The default `dev-key` is intended for local development only — a warning is logged if used in non-debug mode.
+
+The frontend sends the API key automatically via the `VITE_API_KEY` environment variable.
 
 ## Regulatory Templates
 
@@ -178,7 +185,23 @@ Amini ships with pre-built templates for:
 | **EU AI Act** | 8 | Art. 9 (Risk Management), Art. 13 (Transparency), Art. 14 (Human Oversight), Art. 15 (Accuracy/Robustness) |
 | **SOC 2 Type II** | 6 | CC6.1 (Access Controls), CC7.2 (System Monitoring), CC8.1 (Change Management) |
 
-Templates map regulatory requirements to specific policy conditions, evidence types, and review cadences. Additional frameworks (NIST AI RMF, SEC, state laws) can be added via the extensible regulation model.
+Templates map regulatory requirements to specific policy conditions, evidence types, and review cadences. Additional frameworks (NIST AI RMF, SEC, state laws) can be added via the extensible regulation model. Templates can be seeded from the Settings page or via `POST /api/v1/regulations/seed`.
+
+## Policy Engine
+
+The deterministic policy engine supports 13 comparison operators:
+
+| Operator | Description |
+|----------|-------------|
+| `equals`, `not_equals` | Exact match |
+| `contains`, `not_contains` | Substring / collection membership |
+| `greater_than`, `less_than` | Numeric comparison |
+| `greater_than_or_equal`, `less_than_or_equal` | Numeric comparison |
+| `in_list`, `not_in_list` | Value in array |
+| `matches_regex` | Regex match (ReDoS-safe, input truncated to 10k chars) |
+| `is_empty`, `is_not_empty` | Null / empty string / empty collection check |
+
+Policies support compound conditions with `AND`, `OR`, and `NOT` logical operators, and three enforcement modes: `BLOCK` (prevents execution), `WARN` (logs warning, allows execution), and `LOG_ONLY` (silent audit trail).
 
 ## Testing
 

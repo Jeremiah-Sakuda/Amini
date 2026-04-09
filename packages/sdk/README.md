@@ -92,6 +92,8 @@ handler = AminiLangChainHandler(amini)
 chain.invoke({"input": "..."}, config={"callbacks": [handler]})
 ```
 
+The LangChain handler automatically tracks parent-child relationships between LLM calls, chain steps, and tool invocations using LangChain's `parent_run_id`, producing hierarchical decision chains rather than flat lists.
+
 ## Configuration
 
 | Parameter | Env Var | Default | Description |
