@@ -41,6 +41,20 @@ typing-extensions = ">=4.12"
 tz = ["tzdata"]
 
 [[package]]
+name = "amini-policy-core"
+version = "0.1.0"
+description = "Shared policy evaluation core for Amini SDK and backend"
+optional = false
+python-versions = "^3.10"
+groups = ["main"]
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "../policy-core"
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 description = "Reusable constraint types to use with typing.Annotated"
@@ -1456,4 +1470,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "a9bf8ef68606ef90ee16894d32da132e13c2995fb1dc0f612798dd901e4d4787"
+content-hash = "6e90218657f6d43ec1f0ded8e7fa6989d7a317c48a7ba191dbd357ae190b314f"
