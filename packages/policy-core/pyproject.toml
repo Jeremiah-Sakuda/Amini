@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "amini-policy-core"
+version = "0.1.0"
+description = "Shared policy evaluation core for Amini SDK and backend"
+authors = ["Amini Team"]
+packages = [{include = "amini_policy_core", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

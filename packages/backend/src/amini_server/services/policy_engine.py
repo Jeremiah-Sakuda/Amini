@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
-import re
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 import yaml
+from amini_policy_core import (
+    compare as _compare,
+    evaluate_condition as _evaluate_condition,
+    resolve_field as _resolve_field,
+)
 
 from ..models.decision import DecisionNode
 from ..models.policy import PolicyEnforcement, PolicyTier, PolicyVersion
@@ -13,6 +17,26 @@ from ..models.session import AgentSession
 from ..models.violation import ViolationSeverity
 
 logger = logging.getLogger("amini.policy_engine")
+
+# Type alias for the semantic judge callback.
+# A judge receives (policy_version, context_dict) and returns an EvaluationResult.
+SemanticJudgeFn = Callable[["PolicyVersion", dict[str, Any]], "EvaluationResult"]
+
+# Module-level registry for the semantic judge.  Call
+# ``register_semantic_judge(fn)`` to plug in an LLM-backed judge.
+_semantic_judge: SemanticJudgeFn | None = None
+
+
+def register_semantic_judge(fn: SemanticJudgeFn) -> None:
+    """Register an LLM judge function for semantic policy evaluation.
+
+    The function should accept a ``PolicyVersion`` and a context dict, and
+    return an ``EvaluationResult``.  This enables the two-tier model
+    (deterministic + LLM-judge) described in the PRD.
+    """
+    global _semantic_judge
+    _semantic_judge = fn
+    logger.info("Semantic judge registered: %s", fn.__qualname__)
 
 
 @dataclass
@@ -22,6 +46,7 @@ class EvaluationResult:
     severity: str
     message: str
     evidence: dict | None = None
+    deferred: bool = False
 
 
 def load_policy(yaml_content: str) -> dict:
@@ -47,12 +72,31 @@ def evaluate_session(
         if not pv.is_active:
             continue
         if pv.tier == PolicyTier.SEMANTIC:
-            results.append(EvaluationResult(
-                violated=False,
-                policy_version_id=pv.id,
-                severity=pv.severity,
-                message="Semantic evaluation not implemented (stub)",
-            ))
+            if _semantic_judge is not None:
+                session_context = _build_session_context(session, decisions)
+                try:
+                    result = _semantic_judge(pv, session_context)
+                    results.append(result)
+                except Exception:
+                    logger.exception(
+                        "Semantic judge failed for policy %s; deferring",
+                        pv.id,
+                    )
+                    results.append(EvaluationResult(
+                        violated=False,
+                        policy_version_id=pv.id,
+                        severity=pv.severity,
+                        message="Semantic judge error — deferred for async advisory review",
+                        deferred=True,
+                    ))
+            else:
+                results.append(EvaluationResult(
+                    violated=False,
+                    policy_version_id=pv.id,
+                    severity=pv.severity,
+                    message="No semantic judge registered — deferred for async advisory review",
+                    deferred=True,
+                ))
             continue
 
         if not _match_scope(pv.scope, session):
@@ -171,65 +215,7 @@ def _build_decision_context(decision: DecisionNode) -> dict[str, Any]:
     }
 
 
-def _evaluate_condition(condition: dict, context: dict[str, Any]) -> bool:
-    """Safe recursive-descent evaluation of condition DSL. No eval()."""
-    if "and" in condition:
-        return all(_evaluate_condition(c, context) for c in condition["and"])
-    if "or" in condition:
-        return any(_evaluate_condition(c, context) for c in condition["or"])
-    if "not" in condition:
-        return not _evaluate_condition(condition["not"], context)
-
-    field = condition.get("field", "")
-    operator = condition.get("operator", "")
-    expected = condition.get("value")
-
-    actual = _resolve_field(field, context)
-
-    return _compare(actual, operator, expected)
-
-
-def _resolve_field(field: str, context: dict[str, Any]) -> Any:
-    """Resolve a dotted field path against context dict."""
-    parts = field.split(".")
-    current: Any = context
-    for part in parts:
-        if isinstance(current, dict):
-            current = current.get(part)
-        else:
-            return None
-    return current
-
-
-def _compare(actual: Any, operator: str, expected: Any) -> bool:
-    """Safe comparison without eval()."""
-    if actual is None:
-        return False
-
-    try:
-        if operator == "equals":
-            return actual == expected
-        elif operator == "not_equals":
-            return actual != expected
-        elif operator == "greater_than":
-            return float(actual) > float(expected)
-        elif operator == "less_than":
-            return float(actual) < float(expected)
-        elif operator == "greater_than_or_equal":
-            return float(actual) >= float(expected)
-        elif operator == "less_than_or_equal":
-            return float(actual) <= float(expected)
-        elif operator == "contains":
-            return str(expected) in str(actual)
-        elif operator == "not_contains":
-            return str(expected) not in str(actual)
-        elif operator == "matches_regex":
-            return bool(re.search(str(expected), str(actual)))
-        elif operator == "in_list":
-            return actual in (expected if isinstance(expected, list) else [expected])
-        elif operator == "not_in_list":
-            return actual not in (expected if isinstance(expected, list) else [expected])
-    except (ValueError, TypeError):
-        return False
-
-    return False
+# _evaluate_condition, _resolve_field, and _compare are imported from
+# amini_policy_core at the top of this module.  This eliminates the previous
+# copy-paste duplication and guarantees the SDK and backend always evaluate
+# conditions identically.
