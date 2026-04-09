@@ -15,24 +15,24 @@ export function DecisionNodeCard({ node, isActive, onClick }: Props) {
     <div
       className={`rounded-lg border transition-colors ${
         isActive
-          ? 'border-amini-400 bg-amini-50 ring-2 ring-amini-200'
+          ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20'
           : node.has_error
-          ? 'border-red-200 bg-red-50'
-          : 'border-gray-200 bg-white hover:border-gray-300'
+          ? 'border-red-500/30 bg-red-500/5'
+          : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
       }`}
     >
       <button
         onClick={() => { onClick(); setExpanded(!expanded) }}
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
       >
-        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        {expanded ? <ChevronDown size={14} className="text-zinc-500" /> : <ChevronRight size={14} className="text-zinc-500" />}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 truncate">
+            <span className="text-sm font-medium text-zinc-100 truncate">
               {node.decision_type}
             </span>
             {node.action_type && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="flex items-center gap-1 text-xs text-zinc-500">
                 <Zap size={10} />
                 {node.action_type}
               </span>
@@ -40,55 +40,55 @@ export function DecisionNodeCard({ node, isActive, onClick }: Props) {
           </div>
           <div className="flex items-center gap-3 mt-0.5">
             {node.duration_ms !== null && (
-              <span className="flex items-center gap-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1 text-xs text-zinc-600">
                 <Clock size={10} />
                 {node.duration_ms}ms
               </span>
             )}
             {node.has_error && (
-              <span className="flex items-center gap-1 text-xs text-red-600">
+              <span className="flex items-center gap-1 text-xs text-red-400">
                 <AlertCircle size={10} />
                 Error
               </span>
             )}
           </div>
         </div>
-        <span className="text-xs text-gray-400">#{node.sequence_number}</span>
+        <span className="text-xs text-zinc-600">#{node.sequence_number}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-3 space-y-3">
+        <div className="border-t border-zinc-800 px-4 py-3 space-y-3">
           {node.input_context && (
             <CollapsibleSection title="Input">
-              <pre className="text-xs text-gray-600 overflow-x-auto">
+              <pre className="text-xs text-zinc-400 overflow-x-auto">
                 {JSON.stringify(node.input_context, null, 2)}
               </pre>
             </CollapsibleSection>
           )}
           {node.reasoning_trace && (
             <CollapsibleSection title="Reasoning">
-              <pre className="text-xs text-gray-600 whitespace-pre-wrap">
+              <pre className="text-xs text-zinc-400 whitespace-pre-wrap">
                 {node.reasoning_trace}
               </pre>
             </CollapsibleSection>
           )}
           {node.action_detail && (
             <CollapsibleSection title="Action">
-              <pre className="text-xs text-gray-600 overflow-x-auto">
+              <pre className="text-xs text-zinc-400 overflow-x-auto">
                 {JSON.stringify(node.action_detail, null, 2)}
               </pre>
             </CollapsibleSection>
           )}
           {node.output && (
             <CollapsibleSection title="Output">
-              <pre className="text-xs text-gray-600 overflow-x-auto">
+              <pre className="text-xs text-zinc-400 overflow-x-auto">
                 {JSON.stringify(node.output, null, 2)}
               </pre>
             </CollapsibleSection>
           )}
           {node.has_error && node.side_effects && (
             <CollapsibleSection title="Error Details">
-              <pre className="text-xs text-red-600 overflow-x-auto">
+              <pre className="text-xs text-red-400 overflow-x-auto">
                 {JSON.stringify(node.side_effects, null, 2)}
               </pre>
             </CollapsibleSection>
@@ -106,7 +106,7 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
     <div>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+        className="flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-300"
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {title}

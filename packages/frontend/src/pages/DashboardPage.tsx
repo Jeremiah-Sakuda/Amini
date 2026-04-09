@@ -44,7 +44,7 @@ export function DashboardPage() {
   if (viewMode === 'compliance') {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Compliance Overview</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Compliance Overview</h2>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -74,8 +74,8 @@ export function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-700">Risk Summary</h3>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+            <h3 className="mb-3 text-sm font-medium text-zinc-300">Risk Summary</h3>
             <div className="space-y-2">
               <RiskRow label="Total Violations" value={totalViolations} color={totalViolations > 0 ? 'red' : 'green'} />
               <RiskRow label="Total Incidents" value={totalIncidents} color={totalIncidents > 0 ? 'orange' : 'green'} />
@@ -83,29 +83,29 @@ export function DashboardPage() {
               <RiskRow label="Decision Nodes Captured" value={totalDecisions} color="blue" />
             </div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-700">Compliance Readiness</h3>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+            <h3 className="mb-3 text-sm font-medium text-zinc-300">Compliance Readiness</h3>
             <div className="space-y-3">
               {(regulationsData?.regulations || []).map((reg) => (
-                <div key={reg.id} className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2">
+                <div key={reg.id} className="flex items-center justify-between rounded-md bg-zinc-800/50 px-3 py-2">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{reg.name}</p>
-                    <p className="text-xs text-gray-500">{reg.requirements.length} requirements</p>
+                    <p className="text-sm font-medium text-zinc-100">{reg.name}</p>
+                    <p className="text-xs text-zinc-500">{reg.requirements.length} requirements</p>
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-zinc-600">
                     {reg.effective_date ? `Effective: ${reg.effective_date}` : ''}
                   </span>
                 </div>
               ))}
               {(regulationsData?.regulations || []).length === 0 && (
-                <p className="text-sm text-gray-400">No frameworks loaded</p>
+                <p className="text-sm text-zinc-600">No frameworks loaded</p>
               )}
             </div>
           </div>
         </div>
 
         <div>
-          <h3 className="mb-3 text-sm font-medium text-gray-700">Recent Sessions</h3>
+          <h3 className="mb-3 text-sm font-medium text-zinc-300">Recent Sessions</h3>
           <SessionList sessions={sessions.slice(0, 5)} />
         </div>
       </div>
@@ -114,7 +114,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Dashboard</h2>
+      <h2 className="text-xl font-semibold text-zinc-100">Dashboard</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -144,7 +144,7 @@ export function DashboardPage() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-medium text-gray-700">Recent Sessions</h3>
+        <h3 className="mb-3 text-sm font-medium text-zinc-300">Recent Sessions</h3>
         <SessionList sessions={sessions.slice(0, 10)} />
       </div>
     </div>
@@ -152,12 +152,12 @@ export function DashboardPage() {
 }
 
 const colorMap: Record<string, string> = {
-  blue: 'bg-blue-50 text-blue-600',
-  green: 'bg-green-50 text-green-600',
-  purple: 'bg-purple-50 text-purple-600',
-  red: 'bg-red-50 text-red-600',
-  orange: 'bg-orange-50 text-orange-600',
-  gray: 'bg-gray-50 text-gray-600',
+  blue: 'bg-blue-500/10 text-blue-400',
+  green: 'bg-emerald-500/10 text-emerald-400',
+  purple: 'bg-purple-500/10 text-purple-400',
+  red: 'bg-red-500/10 text-red-400',
+  orange: 'bg-orange-500/10 text-orange-400',
+  gray: 'bg-zinc-500/10 text-zinc-400',
 }
 
 function StatCard({
@@ -172,12 +172,12 @@ function StatCard({
   color: string
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-center gap-3">
         <div className={`rounded-lg p-2 ${colorMap[color]}`}>{icon}</div>
         <div>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-2xl font-semibold text-zinc-100">{value}</p>
+          <p className="text-xs text-zinc-500">{label}</p>
         </div>
       </div>
     </div>
@@ -185,16 +185,16 @@ function StatCard({
 }
 
 const riskColors: Record<string, string> = {
-  red: 'text-red-600',
-  orange: 'text-orange-600',
-  green: 'text-green-600',
-  blue: 'text-blue-600',
+  red: 'text-red-400',
+  orange: 'text-orange-400',
+  green: 'text-emerald-400',
+  blue: 'text-blue-400',
 }
 
 function RiskRow({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2">
-      <span className="text-sm text-gray-600">{label}</span>
+    <div className="flex items-center justify-between rounded-md bg-zinc-800/50 px-3 py-2">
+      <span className="text-sm text-zinc-400">{label}</span>
       <span className={`text-sm font-semibold ${riskColors[color]}`}>{value}</span>
     </div>
   )
