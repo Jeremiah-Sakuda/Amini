@@ -6,9 +6,9 @@ import { ErrorBanner } from '../components/ErrorBanner'
 import { format } from 'date-fns'
 
 const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800',
-  generating: 'bg-yellow-100 text-yellow-800',
-  failed: 'bg-red-100 text-red-800',
+  completed: 'bg-emerald-500/10 text-emerald-400',
+  generating: 'bg-amber-500/10 text-amber-400',
+  failed: 'bg-red-500/10 text-red-400',
 }
 
 export function ReportsPage() {
@@ -39,14 +39,14 @@ export function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Audit Reports</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-xl font-semibold text-zinc-100">Audit Reports</h2>
+          <p className="mt-1 text-sm text-zinc-500">
             Generate and review compliance-ready audit documentation
           </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 rounded-lg bg-amini-600 px-3 py-2 text-sm font-medium text-white hover:bg-amini-700"
+          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
         >
           <Plus size={16} />
           Generate Report
@@ -54,50 +54,50 @@ export function ReportsPage() {
       </div>
 
       {showForm && (
-        <div className="rounded-lg border border-amini-200 bg-amini-50 p-4">
-          <h3 className="text-sm font-semibold text-gray-900">New Compliance Report</h3>
+        <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-4">
+          <h3 className="text-sm font-semibold text-zinc-100">New Compliance Report</h3>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700">Framework</label>
+              <label className="block text-xs font-medium text-zinc-300">Framework</label>
               <select
                 value={framework}
                 onChange={(e) => setFramework(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
               >
                 <option value="eu-ai-act">EU AI Act</option>
                 <option value="soc2">SOC 2 Type II</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700">Period Start</label>
+              <label className="block text-xs font-medium text-zinc-300">Period Start</label>
               <input
                 type="date"
                 value={periodStart}
                 onChange={(e) => setPeriodStart(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700">Period End</label>
+              <label className="block text-xs font-medium text-zinc-300">Period End</label>
               <input
                 type="date"
                 value={periodEnd}
                 onChange={(e) => setPeriodEnd(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
               />
             </div>
           </div>
           <div className="mt-3 flex justify-end gap-2">
             <button
               onClick={() => setShowForm(false)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700"
             >
               Cancel
             </button>
             <button
               onClick={handleGenerate}
               disabled={!periodStart || !periodEnd || generateReport.isPending}
-              className="rounded-md bg-amini-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amini-700 disabled:opacity-50"
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
             >
               {generateReport.isPending ? 'Generating...' : 'Generate'}
             </button>
@@ -109,19 +109,19 @@ export function ReportsPage() {
         {reports.map((report) => (
           <div
             key={report.id}
-            className="rounded-lg border border-gray-200 bg-white"
+            className="rounded-lg border border-zinc-800 bg-zinc-900"
           >
             <button
               onClick={() => setExpandedId(expandedId === report.id ? null : report.id)}
-              className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-gray-50"
+              className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-zinc-800/50"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gray-100 p-2 text-gray-600">
+                <div className="rounded-lg bg-zinc-800 p-2 text-zinc-400">
                   <FileText size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900">{report.title}</h3>
-                  <p className="text-xs text-gray-500">
+                  <h3 className="text-sm font-medium text-zinc-100">{report.title}</h3>
+                  <p className="text-xs text-zinc-500">
                     {report.framework} &middot; {report.period_start} to {report.period_end} &middot;{' '}
                     {format(new Date(report.created_at), 'MMM d, yyyy')}
                   </p>
@@ -129,7 +129,7 @@ export function ReportsPage() {
               </div>
               <span
                 className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                  statusColors[report.status] || 'bg-gray-100 text-gray-800'
+                  statusColors[report.status] || 'bg-zinc-500/10 text-zinc-400'
                 }`}
               >
                 {report.status}
@@ -137,52 +137,55 @@ export function ReportsPage() {
             </button>
 
             {expandedId === report.id && report.content && (
-              <div className="border-t border-gray-200 px-5 py-4 space-y-4">
+              <div className="border-t border-zinc-800 px-5 py-4 space-y-4">
                 {report.summary && (
                   <div>
-                    <h4 className="text-xs font-semibold uppercase text-gray-500">Executive Summary</h4>
-                    <p className="mt-1 text-sm text-gray-700">{report.summary}</p>
+                    <h4 className="text-xs font-semibold uppercase text-zinc-500">Executive Summary</h4>
+                    <p className="mt-1 text-sm text-zinc-300">{report.summary}</p>
                   </div>
                 )}
 
-                {report.content && typeof report.content === 'object' && (
-                  <>
-                    {(report.content as any).session_summary && (
-                      <div className="grid grid-cols-4 gap-3">
-                        {Object.entries((report.content as any).session_summary).map(([key, val]) => (
-                          <div key={key} className="rounded-md bg-gray-50 p-3">
-                            <p className="text-xs text-gray-500">{key.replace(/_/g, ' ')}</p>
-                            <p className="text-lg font-semibold text-gray-900">{String(val)}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {(report.content as any).violation_summary?.by_severity && (
-                      <div>
-                        <h4 className="text-xs font-semibold uppercase text-gray-500">Violations by Severity</h4>
-                        <div className="mt-2 grid grid-cols-4 gap-2">
-                          {Object.entries((report.content as any).violation_summary.by_severity).map(
-                            ([severity, count]) => (
-                              <div key={severity} className="rounded-md border border-gray-200 p-2 text-center">
-                                <p className="text-xs text-gray-500">{severity}</p>
-                                <p className="text-lg font-semibold text-gray-900">{String(count)}</p>
-                              </div>
-                            )
-                          )}
+                {report.content && typeof report.content === 'object' && (() => {
+                  const content = report.content as Record<string, Record<string, unknown>>
+                  return (
+                    <>
+                      {content.session_summary && (
+                        <div className="grid grid-cols-4 gap-3">
+                          {Object.entries(content.session_summary).map(([key, val]) => (
+                            <div key={key} className="rounded-md bg-zinc-800/50 p-3">
+                              <p className="text-xs text-zinc-500">{key.replace(/_/g, ' ')}</p>
+                              <p className="text-lg font-semibold text-zinc-100">{String(val)}</p>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                      )}
 
-                {report.gap_analysis && (report.gap_analysis as any).missing_policies?.length > 0 && (
+                      {content.violation_summary?.by_severity && (
+                        <div>
+                          <h4 className="text-xs font-semibold uppercase text-zinc-500">Violations by Severity</h4>
+                          <div className="mt-2 grid grid-cols-4 gap-2">
+                            {Object.entries(content.violation_summary.by_severity as Record<string, unknown>).map(
+                              ([severity, count]) => (
+                                <div key={severity} className="rounded-md border border-zinc-800 p-2 text-center">
+                                  <p className="text-xs text-zinc-500">{severity}</p>
+                                  <p className="text-lg font-semibold text-zinc-100">{String(count)}</p>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
+
+                {report.gap_analysis && Array.isArray((report.gap_analysis as Record<string, unknown>).missing_policies) && (
                   <div>
-                    <h4 className="text-xs font-semibold uppercase text-red-600">Compliance Gaps</h4>
+                    <h4 className="text-xs font-semibold uppercase text-red-400">Compliance Gaps</h4>
                     <ul className="mt-2 space-y-1">
-                      {((report.gap_analysis as any).missing_policies as string[]).map(
+                      {((report.gap_analysis as Record<string, unknown>).missing_policies as string[]).map(
                         (gap, i) => (
-                          <li key={i} className="flex items-center gap-2 text-sm text-red-700">
+                          <li key={i} className="flex items-center gap-2 text-sm text-red-400">
                             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                             {gap}
                           </li>
@@ -197,7 +200,7 @@ export function ReportsPage() {
         ))}
 
         {reports.length === 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-8 text-center text-sm text-zinc-500">
             No reports generated yet. Click "Generate Report" to create your first compliance report.
           </div>
         )}
