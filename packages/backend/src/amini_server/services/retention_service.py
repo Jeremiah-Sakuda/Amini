@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import settings
 from ..models.event import RawEvent
 from ..models.session import AgentSession
-from ..models.violation import Violation
+from ..models.violation import PolicyViolation as Violation
 
 logger = logging.getLogger("amini.retention")
 

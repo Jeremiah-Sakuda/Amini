@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from collections import defaultdict
 
@@ -14,12 +15,29 @@ from .session_service import get_or_create_session
 logger = logging.getLogger("amini.chain_builder")
 
 
+def _event_sort_key(event: RawEvent) -> tuple:
+    """Build a sort key that prefers logical sequence over wall-clock time.
+
+    Events emitted by the SDK carry a ``sequence_number`` inside their payload.
+    Using this as the primary sort key makes ordering deterministic regardless
+    of clock skew between agents running on different machines.  The
+    ``sdk_timestamp`` is retained only as a tie-breaker for events that lack a
+    sequence number (e.g. older SDK versions).
+    """
+    payload = event.payload or {}
+    seq = payload.get("sequence_number")
+    # Use a large sentinel so events without a sequence sort after sequenced ones
+    # when mixed, but still sort among themselves by timestamp.
+    return (seq if seq is not None else float("inf"), event.sdk_timestamp)
+
+
 async def build_chain_from_events(
     db: AsyncSession, events: list[RawEvent]
 ) -> list[DecisionNode]:
     """Reconstruct decision nodes from raw events.
 
-    Groups events by decision_id, orders by sdk_timestamp + sequence.
+    Groups events by decision_id, orders by logical sequence number (with
+    sdk_timestamp as fallback for clock-skew resilience).
     Creates DecisionNode records in the database.
     """
     # Group events by session
@@ -30,7 +48,7 @@ async def build_chain_from_events(
     created_nodes: list[DecisionNode] = []
 
     for session_ext_id, session_events in by_session.items():
-        session_events.sort(key=lambda e: e.sdk_timestamp)
+        session_events.sort(key=_event_sort_key)
 
         # Ensure session exists
         first = session_events[0]
@@ -55,10 +73,18 @@ async def build_chain_from_events(
             if event.decision_id and event.event_type.startswith("decision."):
                 by_decision[event.decision_id].append(event)
 
+        # Order decisions by the earliest sequence number (or timestamp) of
+        # their first event so that the session-level sequence_counter
+        # reflects logical ordering rather than wall-clock arrival order.
+        ordered_decisions = sorted(
+            by_decision.items(),
+            key=lambda pair: _event_sort_key(min(pair[1], key=_event_sort_key)),
+        )
+
         # Process each decision group
         sequence_counter = 0
-        for decision_ext_id, decision_events in by_decision.items():
-            decision_events.sort(key=lambda e: e.sdk_timestamp)
+        for decision_ext_id, decision_events in ordered_decisions:
+            decision_events.sort(key=_event_sort_key)
 
             # Check if node already exists (idempotent)
             existing = await db.execute(
@@ -110,7 +136,7 @@ def _build_decision_node(
             node.input_context = payload
 
         elif event.event_type == "decision.reasoning":
-            node.reasoning_trace = str(payload)
+            node.reasoning_trace = json.dumps(payload)
 
         elif event.event_type == "decision.action":
             node.action_type = payload.get("action_type")

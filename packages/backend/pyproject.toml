@@ -9,6 +9,7 @@ packages = [{include = "amini_server", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "^0.115"
+amini-policy-core = {path = "../policy-core", develop = true}
 uvicorn = {extras = ["standard"], version = "^0.34"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0"}
 aiosqlite = "^0.21"

@@ -288,6 +288,19 @@ class Amini:
 
 
 def _safe_repr(obj: Any) -> Any:
+    """Safely convert an object to a JSON-compatible representation.
+
+    Uses a structured fallback chain to preserve as much fidelity as possible:
+    1. Primitives pass through unchanged.
+    2. Dicts and lists are recursed into.
+    3. Pydantic v2 models → ``.model_dump()``
+    4. Pydantic v1 models → ``.dict()``
+    5. dataclasses → ``dataclasses.asdict()``
+    6. Objects with ``__dict__`` → shallow copy of ``__dict__``
+    7. Final fallback → ``str()``
+    """
+    import dataclasses
+
     if obj is None:
         return None
     if isinstance(obj, (str, int, float, bool)):
@@ -296,6 +309,35 @@ def _safe_repr(obj: Any) -> Any:
         return {k: _safe_repr(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_safe_repr(item) for item in obj]
+
+    # Pydantic v2
+    if hasattr(obj, "model_dump") and callable(obj.model_dump):
+        try:
+            return _safe_repr(obj.model_dump())
+        except Exception:
+            pass
+
+    # Pydantic v1
+    if hasattr(obj, "dict") and callable(obj.dict) and hasattr(obj, "__fields__"):
+        try:
+            return _safe_repr(obj.dict())
+        except Exception:
+            pass
+
+    # dataclasses
+    if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+        try:
+            return _safe_repr(dataclasses.asdict(obj))
+        except Exception:
+            pass
+
+    # Generic objects with __dict__
+    if hasattr(obj, "__dict__"):
+        try:
+            return _safe_repr(vars(obj))
+        except Exception:
+            pass
+
     try:
         return str(obj)
     except Exception:
