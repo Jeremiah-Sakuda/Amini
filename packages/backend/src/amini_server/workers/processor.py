@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,21 +18,28 @@ from ..services.violation_service import record_violation
 
 logger = logging.getLogger("amini.processor")
 
-# Module-level lock prevents concurrent processing runs
+# In-process lock to prevent concurrent processing within a single worker.
+# For multi-worker deployments, the SELECT...FOR UPDATE below provides
+# database-level coordination.
 _processing_lock = asyncio.Lock()
 
 
 async def process_pending_events(db: AsyncSession) -> int:
     """Process unprocessed events: build chains, evaluate policies, record violations.
 
-    Uses an asyncio lock to prevent concurrent processing runs that could
-    cause duplicate chain building or violation recording.
+    Uses a non-blocking lock acquisition to skip if already running in this
+    process, avoiding the TOCTOU race of checking locked() then acquiring.
     """
-    if _processing_lock.locked():
+    if not _processing_lock.locked():
+        acquired = _processing_lock.locked()  # noqa — just for clarity
+    # Non-blocking acquire: skip if another coroutine is already processing
+    try:
+        await asyncio.wait_for(_processing_lock.acquire(), timeout=0.01)
+    except asyncio.TimeoutError:
         logger.debug("Processing already in progress, skipping")
         return 0
 
-    async with _processing_lock:
+    try:
         events = await get_unprocessed_events(db, limit=200)
         if not events:
             return 0
@@ -97,3 +104,5 @@ async def process_pending_events(db: AsyncSession) -> int:
             len(events), len(nodes), violation_count,
         )
         return len(events)
+    finally:
+        _processing_lock.release()

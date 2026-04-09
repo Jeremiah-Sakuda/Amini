@@ -13,7 +13,7 @@ from ..models.session import AgentSession
 from ..models.violation import PolicyViolation
 
 
-async def generate_report(
+async def create_pending_report(
     db: AsyncSession,
     framework: str,
     period_start: str,
@@ -21,6 +21,7 @@ async def generate_report(
     agent_ids: list[str] | None = None,
     title: str | None = None,
 ) -> AuditReport:
+    """Create a report record in GENERATING status and return immediately."""
     report_title = title or f"{framework.upper()} Compliance Report ({period_start} to {period_end})"
     report = AuditReport(
         title=report_title,
@@ -32,7 +33,23 @@ async def generate_report(
         agent_ids=agent_ids,
     )
     db.add(report)
-    await db.flush()
+    await db.commit()
+    return report
+
+
+async def generate_report_content(
+    db: AsyncSession,
+    report_id: str,
+    framework: str,
+    period_start: str,
+    period_end: str,
+    agent_ids: list[str] | None = None,
+) -> AuditReport:
+    """Populate report content — intended to run as a background task."""
+    result = await db.execute(
+        select(AuditReport).where(AuditReport.id == report_id)
+    )
+    report = result.scalar_one()
 
     try:
         content = await _build_report_content(db, framework, period_start, period_end, agent_ids)
@@ -44,7 +61,6 @@ async def generate_report(
         report.status = ReportStatus.FAILED
         report.summary = f"Report generation failed: {str(e)}"
 
-    await db.flush()
     await db.commit()
     return report
 
