@@ -84,19 +84,23 @@ async def build_chain_from_events(
             key=lambda pair: _event_sort_key(min(pair[1], key=_event_sort_key)),
         )
 
+        # Batch-query existing nodes for this session to avoid N+1
+        all_ext_ids = [ext_id for ext_id, _ in ordered_decisions]
+        existing_result = await db.execute(
+            select(DecisionNode.decision_external_id).where(
+                DecisionNode.session_id == session.id,
+                DecisionNode.decision_external_id.in_(all_ext_ids),
+            )
+        )
+        existing_ext_ids = set(existing_result.scalars().all())
+
         # Process each decision group
         sequence_counter = 0
         for decision_ext_id, decision_events in ordered_decisions:
             decision_events.sort(key=_event_sort_key)
 
             # Check if node already exists (idempotent)
-            existing = await db.execute(
-                select(DecisionNode).where(
-                    DecisionNode.decision_external_id == decision_ext_id,
-                    DecisionNode.session_id == session.id,
-                )
-            )
-            if existing.scalar_one_or_none() is not None:
+            if decision_ext_id in existing_ext_ids:
                 continue
 
             sequence_counter += 1
