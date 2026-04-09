@@ -68,7 +68,15 @@ def compare(actual: Any, operator: str, expected: Any) -> bool:
         elif operator == "not_contains":
             return str(expected) not in str(actual)
         elif operator == "matches_regex":
-            return bool(re.search(str(expected), str(actual)))
+            try:
+                pattern = re.compile(str(expected))
+                return bool(pattern.search(str(actual)[:10_000]))
+            except re.error:
+                return False
+        elif operator == "is_empty":
+            return actual is None or actual == "" or actual == [] or actual == {}
+        elif operator == "is_not_empty":
+            return actual is not None and actual != "" and actual != [] and actual != {}
         elif operator == "in_list":
             return actual in (expected if isinstance(expected, list) else [expected])
         elif operator == "not_in_list":

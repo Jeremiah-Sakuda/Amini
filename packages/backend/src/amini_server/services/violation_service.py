@@ -37,7 +37,12 @@ async def record_violation(
         from .incident_service import create_incident_from_violation
         await create_incident_from_violation(db, violation)
     except Exception:
-        logger.warning("Failed to create incident from violation %s", violation.id, exc_info=True)
+        logger.error(
+            "Failed to create incident from violation %s — incident will be missing",
+            violation.id,
+            exc_info=True,
+        )
+        raise
 
     return violation
 
