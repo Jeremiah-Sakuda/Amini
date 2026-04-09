@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.registry import AgentRegistryEntry, AgentRegistryListResponse, AgentRegistryUpdate
 from ..services.registry_service import get_agent, get_agent_entry, list_agents, update_agent
 
-router = APIRouter(prefix="/api/v1/registry", tags=["agent-registry"])
+router = APIRouter(
+    prefix="/api/v1/registry",
+    tags=["agent-registry"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=AgentRegistryListResponse)

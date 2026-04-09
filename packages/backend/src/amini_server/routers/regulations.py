@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.regulations import (
     ComplianceOverviewResponse,
     RegulationListResponse,
@@ -16,7 +16,11 @@ from ..services.regulation_service import (
     seed_regulations,
 )
 
-router = APIRouter(prefix="/api/v1/regulations", tags=["regulations"])
+router = APIRouter(
+    prefix="/api/v1/regulations",
+    tags=["regulations"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=RegulationListResponse)

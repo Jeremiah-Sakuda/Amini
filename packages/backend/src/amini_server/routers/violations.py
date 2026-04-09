@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.violations import ViolationListResponse, ViolationResponse
 from ..services.violation_service import list_violations
 
-router = APIRouter(prefix="/api/v1/violations", tags=["violations"])
+router = APIRouter(
+    prefix="/api/v1/violations",
+    tags=["violations"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=ViolationListResponse)

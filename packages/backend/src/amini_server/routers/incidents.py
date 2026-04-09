@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.incidents import IncidentListResponse, IncidentResponse, IncidentUpdateRequest
 from ..services.incident_service import get_incident, list_incidents, update_incident
 
-router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
+router = APIRouter(
+    prefix="/api/v1/incidents",
+    tags=["incidents"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=IncidentListResponse)

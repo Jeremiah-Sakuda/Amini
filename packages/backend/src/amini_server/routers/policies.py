@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..models.policy import Policy, PolicyVersion
 from ..schemas.policies import (
     PolicyCreate,
@@ -13,7 +13,11 @@ from ..schemas.policies import (
 )
 from ..services.policy_engine import load_policy
 
-router = APIRouter(prefix="/api/v1/policies", tags=["policies"])
+router = APIRouter(
+    prefix="/api/v1/policies",
+    tags=["policies"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=list[PolicyResponse])

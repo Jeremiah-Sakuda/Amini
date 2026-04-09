@@ -2,12 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..models.decision import DecisionNode
 from ..models.session import AgentSession
 from ..schemas.decisions import DecisionNodeResponse, DecisionTreeNode, DecisionTreeResponse
 
-router = APIRouter(prefix="/api/v1/sessions/{session_id}/decisions", tags=["decisions"])
+router = APIRouter(
+    prefix="/api/v1/sessions/{session_id}/decisions",
+    tags=["decisions"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=list[DecisionNodeResponse])

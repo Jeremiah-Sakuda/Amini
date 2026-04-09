@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.sessions import SessionDetailResponse, SessionListResponse, SessionResponse
 from ..services.session_service import get_session_detail, list_sessions
 
-router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
+router = APIRouter(
+    prefix="/api/v1/sessions",
+    tags=["sessions"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get("", response_model=SessionListResponse)

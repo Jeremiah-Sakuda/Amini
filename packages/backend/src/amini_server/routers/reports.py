@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..schemas.reports import AuditReportListResponse, AuditReportResponse, ReportGenerateRequest
 from ..services.report_service import generate_report, get_report, list_reports
 
-router = APIRouter(prefix="/api/v1/reports", tags=["audit-reports"])
+router = APIRouter(
+    prefix="/api/v1/reports",
+    tags=["audit-reports"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.post("", response_model=AuditReportResponse, status_code=201)
