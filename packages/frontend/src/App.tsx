@@ -9,6 +9,7 @@ import { RegulationsPage } from './pages/RegulationsPage'
 import { ViolationsPage } from './pages/ViolationsPage'
 import { IncidentsPage } from './pages/IncidentsPage'
 import { ReportsPage } from './pages/ReportsPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/violations" element={<ViolationsPage />} />
         <Route path="/incidents" element={<IncidentsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )

@@ -8,6 +8,7 @@ import {
   BookOpen,
   AlertOctagon,
   FileText,
+  Settings,
 } from 'lucide-react'
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { to: '/violations', icon: AlertTriangle, label: 'Violations' },
   { to: '/incidents', icon: AlertOctagon, label: 'Incidents' },
   { to: '/reports', icon: FileText, label: 'Audit Reports' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export function Sidebar() {
