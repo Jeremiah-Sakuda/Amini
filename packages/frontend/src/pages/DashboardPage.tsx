@@ -7,13 +7,14 @@ import { useIncidents } from '../api/incidents'
 import { useReports } from '../api/reports'
 import { useRegulations } from '../api/regulations'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { SessionList } from '../components/SessionList'
 import type { ViewMode } from '../components/Layout'
 
 export function DashboardPage() {
   const { viewMode } = useOutletContext<{ viewMode: ViewMode }>()
-  const { data: sessionsData, isLoading: sessionsLoading } = useSessions({ page: 1 })
-  const { data: violationsData, isLoading: violationsLoading } = useViolations({ page: 1 })
+  const { data: sessionsData, isLoading: sessionsLoading, isError: sessionsError, error: sessionsErr } = useSessions({ page: 1 })
+  const { data: violationsData, isLoading: violationsLoading, isError: violationsError, error: violationsErr } = useViolations({ page: 1 })
   const { data: registryData } = useAgentRegistry()
   const { data: incidentsData } = useIncidents({ page: 1 })
   const { data: reportsData } = useReports()
@@ -21,6 +22,12 @@ export function DashboardPage() {
 
   if (sessionsLoading || violationsLoading) {
     return <LoadingSpinner />
+  }
+  if (sessionsError || violationsError) {
+    const msg = sessionsErr instanceof Error ? sessionsErr.message
+      : violationsErr instanceof Error ? violationsErr.message
+      : 'Failed to load dashboard data'
+    return <ErrorBanner message={msg} />
   }
 
   const sessions = sessionsData?.sessions || []

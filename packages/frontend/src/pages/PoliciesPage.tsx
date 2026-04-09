@@ -1,12 +1,14 @@
 import { usePolicies } from '../api/policies'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { SeverityBadge, TierBadge } from '../components/PolicyBadge'
 import { formatDistanceToNow } from 'date-fns'
 
 export function PoliciesPage() {
-  const { data: policies, isLoading } = usePolicies()
+  const { data: policies, isLoading, isError, error } = usePolicies()
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load policies'} />
 
   return (
     <div className="space-y-4">

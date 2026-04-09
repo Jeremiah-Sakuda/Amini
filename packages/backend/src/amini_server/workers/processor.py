@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models.policy import PolicyVersion
+from ..models.violation import PolicyViolation
+from ..models.agent import Agent
 from ..models.session import AgentSession
 from ..services.chain_builder import build_chain_from_events
 from ..services.event_service import get_unprocessed_events, mark_events_processed
@@ -56,16 +58,27 @@ async def process_pending_events(db: AsyncSession) -> int:
         for session_id in session_ids:
             session_result = await db.execute(
                 select(AgentSession)
-                .options(selectinload(AgentSession.decisions))
+                .options(
+                    selectinload(AgentSession.decisions),
+                    selectinload(AgentSession.agent),
+                )
                 .where(AgentSession.id == session_id)
             )
             session = session_result.scalar_one_or_none()
             if not session:
                 continue
 
+            # Load existing violations to prevent duplicates
+            existing_result = await db.execute(
+                select(PolicyViolation.policy_version_id).where(
+                    PolicyViolation.session_id == session_id
+                )
+            )
+            existing_pv_ids = set(existing_result.scalars().all())
+
             results = evaluate_session(session, session.decisions, policy_versions)
             for result in results:
-                if result.violated:
+                if result.violated and result.policy_version_id not in existing_pv_ids:
                     await record_violation(
                         db,
                         session_id=session_id,
@@ -75,6 +88,7 @@ async def process_pending_events(db: AsyncSession) -> int:
                         description=result.message,
                         evidence=result.evidence,
                     )
+                    existing_pv_ids.add(result.policy_version_id)
                     violation_count += 1
 
         await db.commit()

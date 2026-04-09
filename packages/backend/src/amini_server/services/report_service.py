@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models.audit_report import AuditReport, ReportStatus
-from ..models.decision import DecisionNode
 from ..models.incident import Incident
 from ..models.policy import PolicyVersion
 from ..models.session import AgentSession
@@ -145,7 +144,8 @@ async def _build_report_content(
         },
         "evidence_log": {
             "decision_chains_captured": total_decisions,
-            "policy_evaluations_performed": total_violations,
+            "policy_evaluations_performed": total_sessions * len(active_policies),
+            "violations_detected": total_violations,
             "human_review_records": 0,
         },
         "gap_analysis": {

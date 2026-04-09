@@ -64,6 +64,43 @@ async def list_agents(
     return entries, len(entries)
 
 
+async def get_agent_entry(db: AsyncSession, agent_id: str) -> dict | None:
+    """Return a single agent dict with session/violation counts (same shape as list_agents entries)."""
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+    if agent is None:
+        return None
+
+    session_count = await db.execute(
+        select(func.count()).select_from(AgentSession).where(
+            AgentSession.agent_id == agent.id
+        )
+    )
+    violation_count = await db.execute(
+        select(func.count()).select_from(PolicyViolation)
+        .join(AgentSession, PolicyViolation.session_id == AgentSession.id)
+        .where(AgentSession.agent_id == agent.id)
+    )
+    return {
+        "id": agent.id,
+        "agent_external_id": agent.agent_external_id,
+        "name": agent.name,
+        "description": agent.description,
+        "framework": agent.framework,
+        "provider": agent.provider,
+        "risk_class": agent.risk_class,
+        "tags": agent.tags,
+        "data_access_patterns": agent.data_access_patterns,
+        "deployment_status": agent.deployment_status,
+        "discovery_method": agent.discovery_method,
+        "regulations": agent.regulations,
+        "session_count": session_count.scalar() or 0,
+        "violation_count": violation_count.scalar() or 0,
+        "created_at": agent.created_at,
+        "updated_at": agent.updated_at,
+    }
+
+
 async def get_agent(db: AsyncSession, agent_id: str) -> Agent | None:
     result = await db.execute(select(Agent).where(Agent.id == agent_id))
     return result.scalar_one_or_none()

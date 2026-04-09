@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.violation import PolicyViolation, ViolationSeverity
+
+logger = logging.getLogger("amini.violation_service")
 
 
 async def record_violation(
@@ -27,6 +31,14 @@ async def record_violation(
     )
     db.add(violation)
     await db.flush()
+
+    # Auto-generate an incident from the violation
+    try:
+        from .incident_service import create_incident_from_violation
+        await create_incident_from_violation(db, violation)
+    except Exception:
+        logger.warning("Failed to create incident from violation %s", violation.id, exc_info=True)
+
     return violation
 
 

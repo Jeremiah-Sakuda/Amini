@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { useViolations } from '../api/violations'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { SeverityBadge } from '../components/PolicyBadge'
 
 export function ViolationsPage() {
   const [page, setPage] = useState(1)
   const [severity, setSeverity] = useState('')
 
-  const { data, isLoading } = useViolations({
+  const { data, isLoading, isError, error } = useViolations({
     page,
     severity: severity || undefined,
   })
@@ -31,7 +32,9 @@ export function ViolationsPage() {
         </select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load violations'} />
+      ) : isLoading ? (
         <LoadingSpinner />
       ) : !data || data.violations.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">

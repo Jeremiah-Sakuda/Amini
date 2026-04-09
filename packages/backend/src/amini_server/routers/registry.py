@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_db
 from ..schemas.registry import AgentRegistryEntry, AgentRegistryListResponse, AgentRegistryUpdate
-from ..services.registry_service import get_agent, list_agents, update_agent
+from ..services.registry_service import get_agent, get_agent_entry, list_agents, update_agent
 
 router = APIRouter(prefix="/api/v1/registry", tags=["agent-registry"])
 
@@ -31,14 +31,10 @@ async def get_agent_registry(
 
 @router.get("/{agent_id}", response_model=AgentRegistryEntry)
 async def get_agent_detail(agent_id: str, db: AsyncSession = Depends(get_db)):
-    agent = await get_agent(db, agent_id)
-    if not agent:
+    entry = await get_agent_entry(db, agent_id)
+    if not entry:
         raise HTTPException(status_code=404, detail="Agent not found")
-    entries, _ = await list_agents(db)
-    for e in entries:
-        if e["id"] == agent_id:
-            return AgentRegistryEntry(**e)
-    raise HTTPException(status_code=404, detail="Agent not found")
+    return AgentRegistryEntry(**entry)
 
 
 @router.patch("/{agent_id}", response_model=AgentRegistryEntry)
@@ -51,8 +47,7 @@ async def update_agent_registry(
     agent = await update_agent(db, agent_id, updates)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    entries, _ = await list_agents(db)
-    for e in entries:
-        if e["id"] == agent_id:
-            return AgentRegistryEntry(**e)
-    raise HTTPException(status_code=404, detail="Agent not found")
+    entry = await get_agent_entry(db, agent_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return AgentRegistryEntry(**entry)

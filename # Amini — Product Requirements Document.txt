@@ -269,9 +269,9 @@ Why higher than v1.0: The buyer changed. Compliance budgets are 3-5x developer t
 
 **Weeks 3-4 (April 15-30):** Compliance dashboard MVP. Audit report generator for one framework (EU AI Act or SOC 2, determined by customer discovery). Shadow AI detection prototype (network-level heuristic, not production-grade). Landing page and waitlist.
 
-**May 1-25 (pre-IBM):** Multi-framework support. Second regulatory template. 2-3 design partners instrumented. Demo video and written case for YC W27 or Techstars application. Handoff documentation for continued development during internship.
+**May 1-25:** Multi-framework support. Second regulatory template. 2-3 design partners instrumented. Demo video and written case for YC W27 or Techstars application.
 
-**May 26+ (during IBM):** Maintenance mode. Design partners provide feedback. Waitlist grows. Co-founder recruitment active. Weekend development on regulatory mapping engine.
+**May 26+:** Focused development on regulatory mapping engine. Design partners provide feedback. Waitlist grows. Co-founder recruitment active.
 
 ---
 
@@ -290,7 +290,7 @@ Long-term, Amini and AKILI could share a verification engine. Short-term, they v
 **Risk: Observability incumbents add compliance features.**
 Mitigation: Compliance is not a feature you bolt on. It requires regulatory expertise, audit-grade documentation standards, and relationships with compliance buyers. Fiddler is closest, but their product DNA is model monitoring, not regulatory mapping. The risk is real but the moat is domain depth, not technology. Speed still matters.
 
-**Risk: Enterprise sales cycles exceed runway as a solo founder.**
+**Risk: Enterprise sales cycles exceed early-stage runway.**
 Mitigation: The compliance urgency is new. EU AI Act enforcement (August 2026), SEC examination priorities, and state-level laws create artificial deadlines that compress sales cycles. Enterprises with imminent regulatory exposure buy faster than enterprises evaluating optional tooling. Design partners in finserv validate this assumption.
 
 **Risk: Regulatory landscape fragments faster than template development.**
@@ -321,7 +321,7 @@ Mitigation: Detection operates on network metadata (API endpoint patterns, traff
 - What is the minimum viable compliance report that a SOC 2 auditor would accept as sufficient evidence? Requires 2-3 conversations with audit firms (Deloitte, KPMG, or boutique compliance consultancies) by April 15.
 - How should Amini handle agents that operate across jurisdictional boundaries (e.g., an agent serving both EU and U.S. customers with different regulatory requirements)? Jurisdictional routing is a v2 feature but the data model must support it from day one.
 - What is the right partnership model with GRC incumbents (OneTrust, ServiceNow)? Integration vs. competition. Early conversations with their partner teams would clarify whether "AI agent data source for existing GRC" or "standalone AI governance platform" is the stronger initial positioning.
-- Co-founder profile: compliance domain expert with enterprise sales experience, or second technical founder who can maintain velocity during the IBM internship? The answer likely depends on which design partner conversations reveal about the buyer's sophistication.
+- Co-founder profile: compliance domain expert with enterprise sales experience, or second technical founder who can accelerate development velocity? The answer likely depends on which design partner conversations reveal about the buyer's sophistication.
 
 ---
 

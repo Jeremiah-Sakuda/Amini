@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { useReports, useGenerateReport } from '../api/reports'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { format } from 'date-fns'
 
 const statusColors: Record<string, string> = {
@@ -11,7 +12,7 @@ const statusColors: Record<string, string> = {
 }
 
 export function ReportsPage() {
-  const { data, isLoading } = useReports()
+  const { data, isLoading, isError, error } = useReports()
   const generateReport = useGenerateReport()
   const [showForm, setShowForm] = useState(false)
   const [framework, setFramework] = useState('eu-ai-act')
@@ -30,6 +31,7 @@ export function ReportsPage() {
   }
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load reports'} />
 
   const reports = data?.reports || []
 

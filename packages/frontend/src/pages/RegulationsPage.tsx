@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { BookOpen, HelpCircle } from 'lucide-react'
 import { useRegulations } from '../api/regulations'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 export function RegulationsPage() {
-  const { data, isLoading } = useRegulations()
+  const { data, isLoading, isError, error } = useRegulations()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load regulations'} />
 
   const regulations = data?.regulations || []
 

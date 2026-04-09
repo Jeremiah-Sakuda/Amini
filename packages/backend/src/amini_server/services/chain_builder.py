@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.decision import DecisionNode
 from ..models.event import RawEvent
-from ..models.session import AgentSession
+from ..models.session import AgentSession, SessionStatus
 from .session_service import get_or_create_session
 
 logger = logging.getLogger("amini.chain_builder")
@@ -63,8 +63,11 @@ async def build_chain_from_events(
         for event in session_events:
             if event.event_type == "session.end":
                 payload = event.payload or {}
-                status = payload.get("status", "completed")
-                session.status = status
+                raw_status = payload.get("status", "completed")
+                try:
+                    session.status = SessionStatus(raw_status)
+                except ValueError:
+                    session.status = SessionStatus.COMPLETED
                 session.terminal_reason = payload.get("reason")
 
         # Group decision events by decision_id
@@ -107,6 +110,22 @@ async def build_chain_from_events(
             created_nodes.append(node)
 
     await db.flush()
+
+    # Resolve parent_decision_id from external UUID to internal UUID
+    for node in created_nodes:
+        if node._parent_external_id:
+            parent_result = await db.execute(
+                select(DecisionNode.id).where(
+                    DecisionNode.decision_external_id == node._parent_external_id,
+                    DecisionNode.session_id == node.session_id,
+                )
+            )
+            parent_internal_id = parent_result.scalar_one_or_none()
+            if parent_internal_id:
+                node.parent_decision_id = parent_internal_id
+    if created_nodes:
+        await db.flush()
+
     return created_nodes
 
 
@@ -122,6 +141,8 @@ def _build_decision_node(
         decision_external_id=decision_ext_id,
         sequence_number=sequence,
     )
+    # Temporary attribute to hold external parent ID for later resolution
+    node._parent_external_id = None  # type: ignore[attr-defined]
 
     for event in events:
         payload = event.payload or {}
@@ -130,7 +151,7 @@ def _build_decision_node(
             node.decision_type = payload.get("name", "generic")
             parent_id = payload.get("parent_decision_id")
             if parent_id:
-                node.parent_decision_id = parent_id
+                node._parent_external_id = parent_id  # type: ignore[attr-defined]
 
         elif event.event_type == "decision.input":
             node.input_context = payload

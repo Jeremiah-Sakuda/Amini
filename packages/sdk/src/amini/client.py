@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import functools
 import inspect
 import logging
@@ -13,6 +14,7 @@ from .policy import (
     PolicyCache,
     PolicyEnforcement,
     PolicyResult,
+    PolicyRule,
     PolicySeverity,
     PolicyViolationError,
     evaluate_condition,
@@ -56,6 +58,7 @@ class Amini:
         self._sessions = SessionManager()
         self._policy_cache = PolicyCache()
         self._emitter.start()
+        atexit.register(self.shutdown)
 
     @property
     def current_session(self) -> SessionInfo | None:
@@ -65,6 +68,10 @@ class Amini:
     def correlation_id(self) -> str | None:
         session = self._sessions.current
         return session.correlation_id if session else None
+
+    def register_policy(self, policy: PolicyRule) -> None:
+        """Register a policy rule for client-side enforcement."""
+        self._policy_cache.register(policy)
 
     def start_session(
         self,

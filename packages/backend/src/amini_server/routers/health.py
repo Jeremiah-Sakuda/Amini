@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_db, verify_api_key
 from ..services.retention_service import cleanup_expired_data
 
 router = APIRouter(tags=["health"])
@@ -17,7 +17,10 @@ async def ready():
     return {"status": "ready"}
 
 
-@router.post("/api/v1/admin/cleanup")
+@router.post(
+    "/api/v1/admin/cleanup",
+    dependencies=[Depends(verify_api_key)],
+)
 async def run_retention_cleanup(db: AsyncSession = Depends(get_db)):
     """Trigger data retention cleanup — deletes records older than retention_days."""
     result = await cleanup_expired_data(db)

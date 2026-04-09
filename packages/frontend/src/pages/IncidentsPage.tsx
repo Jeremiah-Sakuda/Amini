@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertOctagon, Clock, CheckCircle2, Search } from 'lucide-react'
 import { useIncidents } from '../api/incidents'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { format } from 'date-fns'
 
 const severityColors: Record<string, string> = {
@@ -31,13 +32,14 @@ export function IncidentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [severityFilter, setSeverityFilter] = useState<string>('')
 
-  const { data, isLoading } = useIncidents({
+  const { data, isLoading, isError, error } = useIncidents({
     status: statusFilter || undefined,
     severity: severityFilter || undefined,
     page,
   })
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load incidents'} />
 
   const incidents = data?.incidents || []
   const total = data?.total || 0

@@ -14,14 +14,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def verify_api_key(authorization: str = Header(default="")) -> str:
     """Validate the Bearer token against configured API keys."""
-    if not settings.api_keys:
-        return ""
-
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = authorization.removeprefix("Bearer ").strip()
-    if token not in settings.api_keys:
+    if not settings.api_keys or token not in settings.api_keys:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     return token

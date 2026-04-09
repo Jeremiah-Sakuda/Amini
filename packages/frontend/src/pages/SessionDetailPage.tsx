@@ -3,6 +3,7 @@ import { useParams, useOutletContext } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { useSession } from '../api/sessions'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { SessionTimeline } from '../components/SessionTimeline'
 import { SeverityBadge } from '../components/PolicyBadge'
 import type { ViewMode } from '../components/Layout'
@@ -10,12 +11,13 @@ import type { ViewMode } from '../components/Layout'
 export function SessionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { viewMode } = useOutletContext<{ viewMode: ViewMode }>()
-  const { data: session, isLoading } = useSession(id || '')
+  const { data: session, isLoading, isError, error } = useSession(id || '')
   const [activeTab, setActiveTab] = useState<'replay' | 'audit'>(
     viewMode === 'compliance' ? 'audit' : 'replay'
   )
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load session'} />
   if (!session) return <div className="text-sm text-gray-500">Session not found</div>
 
   return (
@@ -65,6 +67,16 @@ export function SessionDetailPage() {
 }
 
 function AuditView({ session }: { session: NonNullable<ReturnType<typeof useSession>['data']> }) {
+  const handleExportJson = () => {
+    const blob = new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `session-${session.session_external_id}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
@@ -116,10 +128,17 @@ function AuditView({ session }: { session: NonNullable<ReturnType<typeof useSess
       )}
 
       <div className="flex gap-2">
-        <button className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <button
+          onClick={handleExportJson}
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
           Export JSON
         </button>
-        <button className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <button
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+          title="Coming soon"
+          disabled
+        >
           Export PDF
         </button>
       </div>

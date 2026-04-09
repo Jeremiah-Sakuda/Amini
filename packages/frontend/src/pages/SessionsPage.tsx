@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSessions } from '../api/sessions'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { SessionList } from '../components/SessionList'
 
 export function SessionsPage() {
@@ -8,7 +9,7 @@ export function SessionsPage() {
   const [environment, setEnvironment] = useState('')
   const [status, setStatus] = useState('')
 
-  const { data, isLoading } = useSessions({
+  const { data, isLoading, isError, error } = useSessions({
     page,
     environment: environment || undefined,
     status: status || undefined,
@@ -44,7 +45,9 @@ export function SessionsPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load sessions'} />
+      ) : isLoading ? (
         <LoadingSpinner />
       ) : (
         <>

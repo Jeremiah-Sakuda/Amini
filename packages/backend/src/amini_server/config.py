@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     payload_storage_mode: str = "local"  # local | external (future)
     api_keys: list[str] = ["dev-key"]
     retention_days: int = 90
+    pool_size: int = 5
+    max_overflow: int = 10
+    pool_recycle: int = 3600
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Bot, Shield, AlertTriangle } from 'lucide-react'
 import { useAgentRegistry } from '../api/registry'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { ErrorBanner } from '../components/ErrorBanner'
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
@@ -18,11 +19,12 @@ const discoveryColors: Record<string, string> = {
 
 export function RegistryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
-  const { data, isLoading } = useAgentRegistry({
+  const { data, isLoading, isError, error } = useAgentRegistry({
     deployment_status: statusFilter || undefined,
   })
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <ErrorBanner message={error instanceof Error ? error.message : 'Failed to load agent registry'} />
 
   const agents = data?.agents || []
 

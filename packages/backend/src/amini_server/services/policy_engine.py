@@ -173,8 +173,11 @@ def _match_scope(scope: dict | None, session: AgentSession) -> bool:
         return False
 
     agents = scope.get("agents")
-    if agents and session.agent_id not in agents:
-        return False
+    if agents:
+        # Compare against agent_external_id (what the SDK sends), not internal UUID
+        agent_ext_id = session.agent.agent_external_id if session.agent else session.agent_id
+        if agent_ext_id not in agents:
+            return False
 
     return True
 
